@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/xhermitx/gitpulse-01/backend/service/job"
 	"github.com/xhermitx/gitpulse-01/backend/service/user"
 	"gorm.io/gorm"
 )
@@ -26,9 +27,12 @@ func (s *APIServer) Run() error {
 	subrouter := router.PathPrefix("/api/v1").Subrouter()
 
 	userStore := user.NewStore(s.db)
-
 	userHandler := user.NewHandler(userStore)
 	userHandler.RegisterRoutes(subrouter.PathPrefix("/user").Subrouter())
+
+	jobStore := job.NewStore(s.db)
+	jobHandler := job.NewHandler(jobStore)
+	jobHandler.RegisterRoutes(subrouter.PathPrefix("/job").Subrouter())
 
 	log.Println("Listening on", s.addr)
 

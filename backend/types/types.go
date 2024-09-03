@@ -17,3 +17,24 @@ type User struct {
 	Organization string `json:"organization"`
 	CreatedAt    string
 }
+
+type JobStore interface {
+	CreateJob(job Job) (*Job, error)
+	UpdateJob(job Job) (*Job, error)
+	DeleteJob(id uint) error
+	ListJob() ([]Job, error)
+}
+
+type Job struct {
+	JobID       uint
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	DriveLink   string `json:"drive_link"`
+	CreatedAt   string
+}
+
+type CandidateList struct {
+	CandidateID    uint   `json:"candidate_id"`
+	GithubUsername string `json:"github_username"`
+	Score          int    `json:"score"`
+}

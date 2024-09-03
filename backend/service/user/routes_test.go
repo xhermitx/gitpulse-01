@@ -12,7 +12,7 @@ func TestUserServiceHandlers(t *testing.T) {
 
 	handler := NewHandler(userStore)
 
-	t.Run()
+	_ = handler
 }
 
 type mockUserStore struct{}
