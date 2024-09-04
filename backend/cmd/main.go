@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	msql "github.com/go-sql-driver/mysql"
+	mysqlCfg "github.com/go-sql-driver/mysql"
 	"github.com/xhermitx/gitpulse-01/backend/cmd/api"
 	"github.com/xhermitx/gitpulse-01/backend/config"
 	"github.com/xhermitx/gitpulse-01/backend/db"
@@ -13,7 +13,7 @@ import (
 func main() {
 
 	db, err := db.NewMySQLStorage(mysql.Config{
-		DSNConfig: &msql.Config{
+		DSNConfig: &mysqlCfg.Config{
 			User:                 config.Envs.DBUser,
 			Passwd:               config.Envs.DBPassword,
 			DBName:               config.Envs.DBName,
@@ -27,7 +27,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	server := api.NewAPIServer(":8080", db)
+	server := api.NewAPIServer(config.Envs.Port, db)
 
 	if err := server.Run(); err != nil {
 		log.Fatal(err)

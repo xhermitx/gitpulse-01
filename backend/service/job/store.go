@@ -15,11 +15,11 @@ func NewStore(db *gorm.DB) *Store {
 	}
 }
 
-func (s *Store) CreateJob(job types.Job) (*types.Job, error) {
+func (s *Store) CreateJob(job types.Job) error {
 	panic("uimplemented")
 }
 
-func (s *Store) UpdateJob(job types.Job) (*types.Job, error) {
+func (s *Store) UpdateJob(job types.Job) error {
 	panic("uimplemented")
 }
 
@@ -29,4 +29,8 @@ func (s *Store) DeleteJob(id uint) error {
 
 func (s *Store) ListJob() ([]types.Job, error) {
 	panic("uimplemented")
+}
+
+func (s *Store) FindJobByName(name string) (*types.Job, error) {
+	panic("unimplemented")
 }
