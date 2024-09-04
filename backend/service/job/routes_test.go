@@ -35,22 +35,22 @@ func TestJobHandlers(t *testing.T) {
 
 type mockJobStore struct{}
 
-func (s *mockJobStore) CreateJob(job types.Job) error {
+func (s *mockJobStore) CreateJob(_ types.Job) error {
 	panic("uimplemented")
 }
 
-func (s *mockJobStore) UpdateJob(job types.Job) error {
+func (s *mockJobStore) UpdateJob(_ types.Job) error {
 	panic("uimplemented")
 }
 
-func (s *mockJobStore) DeleteJob(jobId uint) error {
+func (s *mockJobStore) DeleteJob(_ string) error {
 	panic("uimplemented")
 }
 
-func (s *mockJobStore) ListJob() ([]types.Job, error) {
+func (s *mockJobStore) ListJobs(_ string) ([]types.Job, error) {
 	panic("uimplemented")
 }
 
-func (s *mockJobStore) FindJobByName(name string) (*types.Job, error) {
+func (s *mockJobStore) FindJobById(_ string) (*types.Job, error) {
 	panic("unimplemented")
 }

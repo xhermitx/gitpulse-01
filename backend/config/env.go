@@ -18,6 +18,8 @@ type Config struct {
 	DBPassword string
 	DBAddress  string
 	DBName     string
+
+	AuthSecret string
 }
 
 func initConfig() Config {
@@ -30,6 +32,7 @@ func initConfig() Config {
 		DBPassword: getEnv("DB_PASSWORD", "pwd"),
 		DBAddress:  fmt.Sprintf("%s:%s", getEnv("DB_HOST", "127.0.0.1"), getEnv("DB_PORT", ":3306")),
 		DBName:     getEnv("DB_NAME", "test"),
+		AuthSecret: getEnv("AUTH_SECRET", "random_string"),
 	}
 }
 

@@ -6,9 +6,9 @@ CREATE TABLE `jobs` (
   `description`   VARCHAR(255) NOT NULL,
   `drive_link`    VARCHAR(255),
   `created_at`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `username`  VARCHAR(255),
+  `user_id`       VARCHAR(255),
   PRIMARY KEY (`job_id`),
-  FOREIGN KEY (`username`) REFERENCES `users` (`username`) ON DELETE CASCADE
+  FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 -- +goose StatementEnd
 

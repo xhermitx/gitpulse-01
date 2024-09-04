@@ -17,18 +17,30 @@ func TestUserServiceHandlers(t *testing.T) {
 
 type mockUserStore struct{}
 
-func (s *mockUserStore) CreateUser(username string) (*types.User, error) {
+func (s *mockUserStore) CreateUser(_ types.User) error {
 	panic("unimplemented")
 }
 
-func (s *mockUserStore) DeleteUser(username string) error {
+func (s *mockUserStore) DeleteUser(_ string) error {
 	panic("unimplemented")
 }
 
-func (s *mockUserStore) FindUserByEmail(email string) (*types.User, error) {
+func (s *mockUserStore) UpdateUser(_ types.User) error {
 	panic("unimplemented")
 }
 
-func (s *mockUserStore) UpdateUserDetails(user types.User) error {
+func (s *mockUserStore) FindUserByEmail(_ string) (*types.User, error) {
+	panic("unimplemented")
+}
+
+func (s *mockUserStore) FindUserById(_ string) (*types.User, error) {
+	panic("unimplemented")
+}
+
+func (s *mockUserStore) FindUserByUsername(_ string) (*types.User, error) {
+	panic("unimplemented")
+}
+
+func (s *mockUserStore) LoginUser(credentials types.Credentials) (*types.User, error) {
 	panic("unimplemented")
 }

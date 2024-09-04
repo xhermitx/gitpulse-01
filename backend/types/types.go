@@ -1,11 +1,16 @@
 package types
 
 type UserStore interface {
-	CreateUser(username string) (*User, error)
-	DeleteUser(username string) error
-	FindUserByEmail(email string) (*User, error)
-	UpdateUserDetails(user User) error
+	CreateUser(User) error
+	DeleteUser(string) error
+	UpdateUser(User) error
+	LoginUser(Credentials) (*User, error)
+
+	FindUserById(string) (*User, error)
+	FindUserByEmail(string) (*User, error)
+	FindUserByUsername(string) (*User, error)
 }
+
 type User struct {
 	UserId       string `json:"user_id,omitempty" gorm:"primary_key;AUTO_INCREMENT"`
 	FirstName    string `json:"first_name,omitempty" gorm:"not null"`
@@ -17,20 +22,31 @@ type User struct {
 	CreatedAt    string `json:"created_at,omitempty"`
 }
 
+type Credentials struct {
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type JobStore interface {
 	CreateJob(Job) error
 	UpdateJob(Job) error
-	DeleteJob(uint) error
-	ListJob() ([]Job, error)
-	FindJobByName(string) (*Job, error)
+	DeleteJob(string) error
+	ListJobs(string) ([]Job, error)
+	FindJobById(string) (*Job, error)
 }
 
 type Job struct {
 	JobId       string `json:"job_id,omitempty" gorm:"primary_key;AUTO_INCREMENT"`
-	Name        string `json:"name,omitempty" gorm:"unique, not null"`
+	JobName     string `json:"job_name,omitempty" gorm:"unique, not null"`
 	Description string `json:"description,omitempty" gorm:"not null"`
 	DriveLink   string `json:"drive_link,omitempty" gorm:"not null"`
+	CreatedAt   string `json:"created_at,omitempty"`
 	UserId      string `json:"omitempty"`
+}
+
+type DeleteJobPayload struct {
+	JobId string `json:"job_id"`
 }
 
 type Candidate struct {

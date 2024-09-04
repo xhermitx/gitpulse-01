@@ -16,5 +16,5 @@ migrate-status:
 migrate-up:
 	@goose -dir ./db/migrations mysql "${DSN}" up
 
-# migrate-down:
-# 	@cd ./db/migrations && goose mysql ${DSN} down 
+migrate-down:
+	@cd ./db/migrations && goose mysql ${DSN} down 
