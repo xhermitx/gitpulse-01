@@ -4,7 +4,6 @@ type UserStore interface {
 	CreateUser(User) error
 	DeleteUser(string) error
 	UpdateUser(User) error
-	LoginUser(Credentials) (*User, error)
 
 	FindUserById(string) (*User, error)
 	FindUserByEmail(string) (*User, error)
@@ -49,6 +48,10 @@ type DeleteJobPayload struct {
 	JobId string `json:"job_id"`
 }
 
+type DeleteUserPayload struct {
+	UserId string `json:"user_id"`
+}
+
 type Candidate struct {
 	CandidateId     uint   `json:"candidate_id,omitempty" gorm:"primary_key;AUTO_INCREMENT"`
 	GithubId        string `json:"github_username,omitempty" gorm:"unique, not null"`
@@ -59,3 +62,5 @@ type Candidate struct {
 	Score           int    `json:"score,omitempty" gorm:"not null"`
 	JobId           string `json:"job_id,omitempty"`
 }
+
+// type UserContext string

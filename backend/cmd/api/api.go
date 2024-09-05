@@ -31,7 +31,7 @@ func (s *APIServer) Run() error {
 	userHandler.RegisterRoutes(subrouter.PathPrefix("/user").Subrouter())
 
 	jobStore := job.NewStore(s.db)
-	jobHandler := job.NewHandler(jobStore)
+	jobHandler := job.NewHandler(jobStore, userStore)
 	jobHandler.RegisterRoutes(subrouter.PathPrefix("/job").Subrouter())
 
 	log.Println("Listening on", s.addr)

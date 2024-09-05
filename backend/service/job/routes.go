@@ -13,12 +13,14 @@ import (
 type message map[string]any
 
 type Handler struct {
-	store types.JobStore
+	jobStore  types.JobStore
+	userStore types.UserStore
 }
 
-func NewHandler(store types.JobStore) *Handler {
+func NewHandler(jobStore types.JobStore, userStore types.UserStore) *Handler {
 	return &Handler{
-		store: store,
+		jobStore:  jobStore,
+		userStore: userStore,
 	}
 }
 
@@ -39,17 +41,7 @@ func (h *Handler) CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 	// Generate a new ID since it is not received in the request
 	job.JobId = uuid.NewString()
 
-	res, err := h.store.FindJobById(job.JobId)
-	switch true {
-	case res != nil:
-		utils.ErrResponseWriter(w, http.StatusConflict, errors.New("job already exists"))
-		return
-	case err != nil:
-		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	if err = h.store.CreateJob(job); err != nil {
+	if err := h.jobStore.CreateJob(job); err != nil {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -58,8 +50,7 @@ func (h *Handler) CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 		"message":     "Job Created Successfully",
 		"job_details": job,
 	}
-
-	if err = utils.ResponseWriter(w, http.StatusCreated, payload); err != nil {
+	if err := utils.ResponseWriter(w, http.StatusCreated, payload); err != nil {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
 	}
 }
@@ -72,17 +63,17 @@ func (h *Handler) UpdateJobHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.store.FindJobById(job.JobId)
-	switch true {
-	case res == nil:
+	res, err := h.jobStore.FindJobById(job.JobId)
+	if res == nil {
 		utils.ErrResponseWriter(w, http.StatusConflict, errors.New("job does not exist"))
 		return
-	case err != nil:
+	}
+	if err != nil {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	if err = h.store.UpdateJob(job); err != nil {
+	if err = h.jobStore.UpdateJob(job); err != nil {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -90,7 +81,6 @@ func (h *Handler) UpdateJobHandler(w http.ResponseWriter, r *http.Request) {
 	payload := message{
 		"message": "Job Updated Successfully",
 	}
-
 	if err = utils.ResponseWriter(w, http.StatusCreated, payload); err != nil {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
 	}
@@ -103,17 +93,17 @@ func (h *Handler) DeleteJobHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.store.FindJobById(job.JobId)
+	res, err := h.jobStore.FindJobById(job.JobId)
 	switch true {
-	case res != nil:
-		utils.ErrResponseWriter(w, http.StatusConflict, errors.New("job already exists"))
+	case res == nil:
+		utils.ErrResponseWriter(w, http.StatusConflict, errors.New("job does not exist"))
 		return
 	case err != nil:
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	if err = h.store.DeleteJob(job.JobId); err != nil {
+	if err = h.jobStore.DeleteJob(job.JobId); err != nil {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -121,7 +111,6 @@ func (h *Handler) DeleteJobHandler(w http.ResponseWriter, r *http.Request) {
 	payload := message{
 		"message": "Job Deleted Successfully",
 	}
-
 	if err = utils.ResponseWriter(w, http.StatusCreated, payload); err != nil {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
 	}
@@ -131,7 +120,7 @@ func (h *Handler) ListJobHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := r.Context().Value("user_id").(string)
 
-	jobs, err := h.store.ListJobs(id)
+	jobs, err := h.jobStore.ListJobs(id)
 	if err != nil {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
 		return

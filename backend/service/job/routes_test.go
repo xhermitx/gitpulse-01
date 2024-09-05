@@ -11,8 +11,9 @@ import (
 
 func TestJobHandlers(t *testing.T) {
 	jobStore := &mockJobStore{}
+	userStore := &mockUserStore{}
 
-	handler := NewHandler(jobStore)
+	handler := NewHandler(jobStore, userStore)
 
 	t.Run("should fail if the user payload is invalid", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "http://localhost:8000/create", nil)
@@ -52,5 +53,31 @@ func (s *mockJobStore) ListJobs(_ string) ([]types.Job, error) {
 }
 
 func (s *mockJobStore) FindJobById(_ string) (*types.Job, error) {
+	panic("unimplemented")
+}
+
+type mockUserStore struct{}
+
+func (s *mockUserStore) CreateUser(_ types.User) error {
+	panic("unimplemented")
+}
+
+func (s *mockUserStore) DeleteUser(_ string) error {
+	panic("unimplemented")
+}
+
+func (s *mockUserStore) UpdateUser(_ types.User) error {
+	panic("unimplemented")
+}
+
+func (s *mockUserStore) FindUserByEmail(_ string) (*types.User, error) {
+	panic("unimplemented")
+}
+
+func (s *mockUserStore) FindUserById(_ string) (*types.User, error) {
+	panic("unimplemented")
+}
+
+func (s *mockUserStore) FindUserByUsername(_ string) (*types.User, error) {
 	panic("unimplemented")
 }

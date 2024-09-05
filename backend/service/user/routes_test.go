@@ -40,7 +40,3 @@ func (s *mockUserStore) FindUserById(_ string) (*types.User, error) {
 func (s *mockUserStore) FindUserByUsername(_ string) (*types.User, error) {
 	panic("unimplemented")
 }
-
-func (s *mockUserStore) LoginUser(credentials types.Credentials) (*types.User, error) {
-	panic("unimplemented")
-}
