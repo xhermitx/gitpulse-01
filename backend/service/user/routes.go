@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -54,12 +55,10 @@ func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashedPassword, err := auth.HashedPassword(credentials.Password)
-	if err != nil {
-		utils.ErrResponseWriter(w, http.StatusUnauthorized, errors.New("invalid credentials"))
-	}
+	log.Println("user found", user.Username)
 
-	if !auth.ComparePassword(hashedPassword, []byte(user.Password)) {
+	if !auth.ComparePassword([]byte(user.Password), []byte(credentials.Password)) {
+		log.Println("passwords do not match")
 		utils.ErrResponseWriter(w, http.StatusUnauthorized, errors.New("invalid credentials"))
 		return
 	}
@@ -85,6 +84,7 @@ func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	var user types.User
 	if err := utils.ParseRequestBody(r, &user); err != nil {
+		log.Println("Error while Parsing request")
 		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
 		return
 	}
@@ -110,12 +110,17 @@ func (h *Handler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("user created")
+
 	payload := message{
 		"message":      "User Created Successfully",
 		"user_details": user,
 	}
 
-	utils.ResponseWriter(w, http.StatusCreated, payload)
+	if err := utils.ResponseWriter(w, http.StatusCreated, payload); err != nil {
+		log.Println("Error sending response")
+		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
+	}
 }
 
 func (h *Handler) HandleUpdate(w http.ResponseWriter, r *http.Request) {

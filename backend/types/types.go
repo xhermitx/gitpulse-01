@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type UserStore interface {
 	CreateUser(User) error
 	DeleteUser(string) error
@@ -11,14 +13,14 @@ type UserStore interface {
 }
 
 type User struct {
-	UserId       string `json:"user_id,omitempty" gorm:"primary_key;AUTO_INCREMENT"`
-	FirstName    string `json:"first_name,omitempty" gorm:"not null"`
-	LastName     string `json:"last_name,omitempty" gorm:"not null"`
-	Username     string `json:"username,omitempty" gorm:"unique, not null"`
-	Email        string `json:"email,omitempty" gorm:"unique, not null"`
-	Password     string `json:"password,omitempty" gorm:"not null"`
-	Organization string `json:"organization,omitempty" gorm:"not null"`
-	CreatedAt    string `json:"created_at,omitempty"`
+	UserId       string    `json:"user_id,omitempty" gorm:"primary_key;AUTO_INCREMENT"`
+	FirstName    string    `json:"first_name,omitempty" gorm:"not null"`
+	LastName     string    `json:"last_name,omitempty" gorm:"not null"`
+	Username     string    `json:"username,omitempty" gorm:"unique, not null"`
+	Email        string    `json:"email,omitempty" gorm:"unique, not null"`
+	Password     string    `json:"password,omitempty" gorm:"not null"`
+	Organization string    `json:"organization,omitempty" gorm:"not null"`
+	CreatedAt    time.Time `json:"created_at,omitempty" gorm:"type:datetime"`
 }
 
 type Credentials struct {

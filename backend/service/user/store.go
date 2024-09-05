@@ -16,7 +16,7 @@ func NewStore(db *gorm.DB) *Store {
 }
 
 func (s *Store) CreateUser(user types.User) error {
-	if res := s.db.Create(user); res.Error != nil {
+	if res := s.db.Create(&user); res.Error != nil {
 		return res.Error
 	}
 	return nil
