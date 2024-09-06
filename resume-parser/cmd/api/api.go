@@ -62,9 +62,11 @@ func (s *APIServer) TriggerHandler(w http.ResponseWriter, r *http.Request) {
 			content, err := gdrive.GetFileContent(resume)
 			if err != nil {
 				// TODO: Add the filename to Redis
+				_ = err
 			}
 
 			username, err := gdrive.GetUsername(bytes.NewBuffer(content))
+			_ = username
 
 			// TODO: Push the username along with JobId to RabbitMQ
 		}()
