@@ -2,6 +2,7 @@ package job
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -41,6 +42,7 @@ func (h *Handler) CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Generate a new ID since it is not received in the request
 	job.JobId = uuid.NewString()
+	job.UserId = r.Context().Value(types.UserContext("user_id")).(string)
 
 	if err := h.jobStore.CreateJob(job); err != nil {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
@@ -88,6 +90,8 @@ func (h *Handler) DeleteJobHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("job_id: ", job.JobId)
+
 	if !h.checkJobExists(w, job.JobId) {
 		return
 	}
@@ -107,7 +111,7 @@ func (h *Handler) DeleteJobHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) ListJobHandler(w http.ResponseWriter, r *http.Request) {
 
-	id := r.Context().Value("user_id").(string)
+	id := r.Context().Value(types.UserContext("user_id")).(string)
 
 	jobs, err := h.jobStore.ListJobs(id)
 	if err != nil {

@@ -63,7 +63,11 @@ func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := auth.GenerateToken(user.UserId)
+	token, err := auth.GenerateToken(user.UserId)
+	if err != nil {
+		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
+		return
+	}
 	payload := message{
 		"message":      "Login Successful!",
 		"user_details": user,

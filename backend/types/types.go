@@ -23,6 +23,8 @@ type User struct {
 	CreatedAt    time.Time `json:"created_at,omitempty" gorm:"type:datetime"`
 }
 
+type UserContext string
+
 type Credentials struct {
 	Email    string `json:"email"`
 	Username string `json:"username"`
@@ -38,12 +40,12 @@ type JobStore interface {
 }
 
 type Job struct {
-	JobId       string `json:"job_id,omitempty" gorm:"primary_key;AUTO_INCREMENT"`
-	JobName     string `json:"job_name,omitempty" gorm:"unique, not null"`
-	Description string `json:"description,omitempty" gorm:"not null"`
-	DriveLink   string `json:"drive_link,omitempty" gorm:"not null"`
-	CreatedAt   string `json:"created_at,omitempty"`
-	UserId      string `json:"omitempty"`
+	JobId       string    `json:"job_id,omitempty" gorm:"primary_key;AUTO_INCREMENT"`
+	JobName     string    `json:"job_name,omitempty" gorm:"unique, not null"`
+	Description string    `json:"description,omitempty" gorm:"not null"`
+	DriveLink   string    `json:"drive_link,omitempty" gorm:"not null"`
+	CreatedAt   time.Time `json:"created_at,omitempty" gorm:"type:datetime"`
+	UserId      string    `json:"user_id,omitempty"`
 }
 
 type DeleteJobPayload struct {

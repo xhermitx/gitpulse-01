@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 	"github.com/xhermitx/gitpulse-01/backend/utils"
 )
 
-func GenerateToken(id string) string {
+func GenerateToken(id string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": id,
 		"exp":     time.Now().Add(config.Envs.JWTExpiration).Unix(),
@@ -23,10 +24,10 @@ func GenerateToken(id string) string {
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString([]byte(config.Envs.AuthSecret))
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
-	return tokenString
+	return tokenString, nil
 }
 
 func GetToken(r *http.Request) (string, error) {
@@ -57,23 +58,24 @@ func ValidateToken(tokenString string) (*jwt.Token, error) {
 	})
 }
 
-type userContext string
-
 func AuthMiddleware(handlerFunc http.HandlerFunc, store types.UserStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString, err := GetToken(r)
 		if err != nil {
+			log.Println("Error fetching token from header")
 			utils.ErrResponseWriter(w, http.StatusUnauthorized, err)
 			return
 		}
 
 		token, err := ValidateToken(tokenString)
 		if err != nil {
+			log.Println("1 : Error validating token")
 			utils.ErrResponseWriter(w, http.StatusUnauthorized, err)
 			return
 		}
 
 		if !token.Valid {
+			log.Println("2 : Error validating token")
 			utils.ErrResponseWriter(w, http.StatusUnauthorized, err)
 			return
 		}
@@ -81,13 +83,16 @@ func AuthMiddleware(handlerFunc http.HandlerFunc, store types.UserStore) http.Ha
 		claims := token.Claims.(jwt.MapClaims)
 		userId := claims["user_id"].(string)
 
+		log.Println("user_id", userId)
+
 		user, err := store.FindUserById(userId)
 		if err != nil || user == nil {
-			utils.ErrResponseWriter(w, http.StatusUnauthorized, err)
+			log.Println("Error finding user")
+			utils.ErrResponseWriter(w, http.StatusUnauthorized, errors.New("unauthorized"))
 			return
 		}
 
-		ctx := context.WithValue(context.Background(), userContext("user_id"), userId)
+		ctx := context.WithValue(context.Background(), types.UserContext("user_id"), userId)
 		r = r.WithContext(ctx)
 
 		handlerFunc(w, r)

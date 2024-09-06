@@ -23,7 +23,7 @@ func (s *Store) CreateUser(user types.User) error {
 }
 
 func (s *Store) DeleteUser(userId string) error {
-	if res := s.db.Delete(&types.User{}, userId); res.Error != nil {
+	if res := s.db.Delete(&types.User{}, "user_id = ?", userId); res.Error != nil {
 		return res.Error
 	}
 	return nil
@@ -35,7 +35,7 @@ func (s *Store) UpdateUser(user types.User) error {
 
 func (s *Store) FindUserById(userId string) (*types.User, error) {
 	var user types.User
-	if res := s.db.First(&user, userId); res.Error != nil {
+	if res := s.db.First(&user, "user_id = ?", userId); res.Error != nil {
 		return nil, res.Error
 	}
 	return &user, nil
