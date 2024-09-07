@@ -28,12 +28,12 @@ func initConfig() Config {
 	godotenv.Load()
 
 	return Config{
-		PublicHost:    getEnv("PUBLIC_HOST", "http://localhost"),
-		Port:          getEnv("PORT", ":8000"),
-		DBUser:        getEnv("DB_USER", "user"),
-		DBPassword:    getEnv("DB_PASSWORD", "password"),
-		DBAddress:     fmt.Sprintf("%s:%s", getEnv("DB_HOST", "127.0.0.1"), getEnv("DB_PORT", "3306")),
-		DBName:        getEnv("DB_NAME", "gitpulse"),
+		PublicHost:    getEnv("PUBLIC_HOST", ""),
+		Port:          getEnv("PORT", ""),
+		DBUser:        getEnv("DB_USER", ""),
+		DBPassword:    getEnv("DB_PASSWORD", ""),
+		DBAddress:     fmt.Sprintf("%s:%s", getEnv("DB_HOST", ""), getEnv("DB_PORT", "")),
+		DBName:        getEnv("DB_NAME", ""),
 		AuthSecret:    getEnv("AUTH_SECRET", "random_string"),
 		JWTExpiration: time.Duration(time.Hour * 24 * 30), // 30 Days
 	}
