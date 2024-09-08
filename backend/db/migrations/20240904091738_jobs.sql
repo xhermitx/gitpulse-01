@@ -5,6 +5,7 @@ CREATE TABLE `jobs` (
   `job_name`      VARCHAR(255) NOT NULL,
   `description`   VARCHAR(255) NOT NULL,
   `drive_link`    VARCHAR(255),
+  `cloud_provider` VARCHAR(255),
   `created_at`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `user_id`       VARCHAR(255),
   PRIMARY KEY (`job_id`),

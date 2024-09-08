@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	server := api.NewAPIServer(fmt.Sprintf("%s%s", config.Envs.PublicHost, config.Envs.Port))
+	server := api.NewAPIServer(fmt.Sprintf("%s:%s", config.Envs.PublicHost, config.Envs.Port))
 
 	log.Fatal(server.Run())
 

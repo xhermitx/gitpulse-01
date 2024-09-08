@@ -22,12 +22,11 @@ type Config struct {
 
 func initConfig() Config {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal(err)
-		return Config{}
+		log.Println("ERROR LOADING ENVIRONMENT VARIABLES: ", err)
 	}
 	return Config{
-		PublicHost:     getEnv("PUBLIC_HOST", ""),
-		Port:           getEnv("PORT", ""),
+		PublicHost:     getEnv("PUBLIC_HOST", "localhost"),
+		Port:           getEnv("PORT", "8010"),
 		ServiceAccount: getEnv("CREDENTIALS_JSON", ""),
 		TestFolderId:   getEnv("FOLDER_ID", ""),
 	}

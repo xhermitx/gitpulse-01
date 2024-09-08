@@ -19,7 +19,6 @@ const (
 	offset  = 11 // To match id after "github.com/"
 )
 
-// FIXME: Use Dependency Injection instead of relying on drive.Service
 type GoogleDrive struct {
 	FolderId     string
 	DriveService *drive.Service
@@ -88,7 +87,7 @@ func (g *GoogleDrive) GetFileList() ([]string, error) {
 		return nil, err
 	}
 
-	// Read file in the Folder
+	// Read files from the Folder
 	query := fmt.Sprintf("'%s' in parents", g.FolderId)
 
 	res, err := DriveService.Files.List().
@@ -103,8 +102,9 @@ func (g *GoogleDrive) GetFileList() ([]string, error) {
 	var fileList []string
 
 	for _, file := range res.Files {
-		// TODO: Store file.Id:file.Name along with its status in Redis
-		// 		 to be referred when there is an error
+		// TODO: Store file.Id:file.Name along with its
+		//       status(parsed/unparsed) in Redis
+		// 		 To be referred when there is an error
 		fileList = append(fileList, file.Id)
 	}
 
@@ -117,8 +117,7 @@ func (g *GoogleDrive) GetFileContent(fileId string) ([]byte, error) {
 		return nil, err
 	}
 
-	// verify file type as PDF
-	// TODO: Add support for other file types
+	// FIXME: Add support for other file types
 	if file.MimeType != "application/pdf" {
 		return nil, err
 	}
@@ -139,11 +138,11 @@ func (g *GoogleDrive) GetFileContent(fileId string) ([]byte, error) {
 
 func (g *GoogleDrive) GetUsername(fileContent []byte) ([]string, error) {
 
-	fileText := string(fileContent)
-
-	pattern := regexp.MustCompile(pattern)
-
-	uniqIDs := make(map[string]bool)
+	var (
+		fileText = string(fileContent)
+		pattern  = regexp.MustCompile(pattern)
+		uniqIDs  = make(map[string]bool)
+	)
 
 	matches := pattern.FindAllString(fileText, -1)
 	for _, match := range matches {

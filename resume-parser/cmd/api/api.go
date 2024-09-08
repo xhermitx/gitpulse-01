@@ -36,7 +36,8 @@ func (s *APIServer) Run() error {
 
 	subrouter.HandleFunc("/trigger/{provider}", s.TriggerHandler).Methods(http.MethodPost)
 
-	return http.ListenAndServe(s.addr, subrouter)
+	log.Printf("Listening on %s", s.addr)
+	return http.ListenAndServe(s.addr, router)
 }
 
 func (s *APIServer) TriggerHandler(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +75,8 @@ func (s *APIServer) TriggerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.(http.Flusher).Flush()
+	// Flush and close the HTTP connection the before proceeding
+	closeConnection(w)
 
 	var (
 		wg sync.WaitGroup
@@ -132,4 +134,28 @@ func extractFolderID(provider, link string) (string, error) {
 	}
 
 	return "", fmt.Errorf("folder ID not found in link")
+}
+
+func closeConnection(w http.ResponseWriter) {
+
+	responseWriter(w, http.StatusOK, map[string]string{
+		"Message": "Successfully triggered",
+	})
+	w.(http.Flusher).Flush()
+
+	// Try to hijack the connection
+	hijacker, ok := w.(http.Hijacker)
+	if !ok {
+		errResponseWriter(w, http.StatusInternalServerError, errors.New("hijacker unsupported"))
+		return
+	}
+
+	conn, _, err := hijacker.Hijack()
+	if err != nil {
+		errResponseWriter(w, http.StatusInternalServerError, errors.New("failed to hijack"))
+		return
+	}
+
+	// Close the connection manually
+	conn.Close()
 }
