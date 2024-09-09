@@ -20,23 +20,16 @@ const (
 )
 
 type GoogleDrive struct {
-	FolderId     string
 	DriveService *drive.Service
 }
 
-func NewGoogleDrive(folderId string) (*GoogleDrive, error) {
-	DriveService, err := newDriveService()
-	if err != nil {
-		return nil, err
-	}
-
+func NewGoogleDrive(ds *drive.Service) *GoogleDrive {
 	return &GoogleDrive{
-		FolderId:     folderId,
-		DriveService: DriveService,
-	}, nil
+		DriveService: ds,
+	}
 }
 
-func newDriveService() (*drive.Service, error) {
+func NewGoogleService() (*drive.Service, error) {
 	ctx := context.Background()
 
 	// Service Account File
@@ -46,7 +39,6 @@ func newDriveService() (*drive.Service, error) {
 		return nil, err
 	}
 
-	// Configs for drive service
 	config, err := google.JWTConfigFromJSON(jsonKey, drive.DriveReadonlyScope)
 	if err != nil {
 		log.Println("Error getting JWT Configs")
@@ -59,38 +51,13 @@ func newDriveService() (*drive.Service, error) {
 		log.Println("Error creating Service")
 		return nil, err
 	}
-
 	return DriveService, nil
 }
 
-func (g *GoogleDrive) GetFileList() ([]string, error) {
-	ctx := context.Background()
-
-	// Service Account File
-	jsonKey, err := os.ReadFile(config.Envs.ServiceAccount)
-	if err != nil {
-		log.Println("Error reading Credentials")
-		return nil, err
-	}
-
-	// Configs for drive service
-	config, err := google.JWTConfigFromJSON(jsonKey, drive.DriveReadonlyScope)
-	if err != nil {
-		log.Println("Error getting JWT Configs")
-		return nil, err
-	}
-	client := config.Client(ctx)
-
-	DriveService, err := drive.NewService(ctx, option.WithHTTPClient(client))
-	if err != nil {
-		log.Println("Error creating Service")
-		return nil, err
-	}
-
+func (g *GoogleDrive) GetFileList(folderId string) ([]string, error) {
 	// Read files from the Folder
-	query := fmt.Sprintf("'%s' in parents", g.FolderId)
-
-	res, err := DriveService.Files.List().
+	query := fmt.Sprintf("'%s' in parents", folderId)
+	res, err := g.DriveService.Files.List().
 		Q(query).
 		Fields("nextPageToken, files(id, name)").
 		Do()
@@ -100,14 +67,12 @@ func (g *GoogleDrive) GetFileList() ([]string, error) {
 	}
 
 	var fileList []string
-
 	for _, file := range res.Files {
 		// TODO: Store file.Id:file.Name along with its
 		//       status(parsed/unparsed) in Redis
 		// 		 To be referred when there is an error
 		fileList = append(fileList, file.Id)
 	}
-
 	return fileList, nil
 }
 
@@ -116,9 +81,8 @@ func (g *GoogleDrive) GetFileContent(fileId string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// FIXME: Add support for other file types
 	if file.MimeType != "application/pdf" {
+		// FIXME: Add support for other file types
 		return nil, err
 	}
 
@@ -132,12 +96,10 @@ func (g *GoogleDrive) GetFileContent(fileId string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return content, nil
 }
 
 func (g *GoogleDrive) GetUsername(fileContent []byte) ([]string, error) {
-
 	var (
 		fileText = string(fileContent)
 		pattern  = regexp.MustCompile(pattern)
@@ -148,17 +110,14 @@ func (g *GoogleDrive) GetUsername(fileContent []byte) ([]string, error) {
 	for _, match := range matches {
 		uniqIDs[match[offset:]] = true
 	}
-
 	if len(uniqIDs) == 0 {
 		return nil, fmt.Errorf("no username found in file")
 	}
 
 	userIDs := make([]string, 0, len(uniqIDs))
-
 	for key := range uniqIDs {
 		userIDs = append(userIDs, key)
 	}
 
 	return userIDs, nil
-
 }

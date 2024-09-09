@@ -18,6 +18,8 @@ type Config struct {
 
 	// For Testing
 	TestFolderId string
+
+	RMQAddr string
 }
 
 func initConfig() Config {
@@ -29,6 +31,7 @@ func initConfig() Config {
 		Port:           getEnv("PORT", "8010"),
 		ServiceAccount: getEnv("CREDENTIALS_JSON", ""),
 		TestFolderId:   getEnv("FOLDER_ID", ""),
+		RMQAddr:        getEnv("RMQAddr", ""),
 	}
 }
 
