@@ -46,7 +46,6 @@ func (s *APIServer) Run() error {
 }
 
 func (s *APIServer) TriggerHandler(w http.ResponseWriter, r *http.Request) {
-
 	vars := mux.Vars(r)
 	provider := vars["provider"]
 
