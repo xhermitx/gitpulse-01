@@ -129,6 +129,7 @@ func (h *Handler) ListJobHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) TriggerJobHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: To be implemented
+	// 		 Remember to provide the {cloudprovide in the request param}
 }
 
 func (h *Handler) checkJobExists(w http.ResponseWriter, jobId string) bool {

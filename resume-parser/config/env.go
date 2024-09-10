@@ -19,7 +19,8 @@ type Config struct {
 	// For Testing
 	TestFolderId string
 
-	RMQAddr string
+	RMQAddr   string
+	RedisAddr string
 }
 
 func initConfig() Config {
@@ -32,6 +33,7 @@ func initConfig() Config {
 		ServiceAccount: getEnv("CREDENTIALS_JSON", ""),
 		TestFolderId:   getEnv("FOLDER_ID", ""),
 		RMQAddr:        getEnv("RMQAddr", ""),
+		RedisAddr:      getEnv("REDIS_ADDR", ""),
 	}
 }
 

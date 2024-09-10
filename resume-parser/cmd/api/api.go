@@ -4,21 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
-	"regexp"
 	"sync"
 
 	"github.com/gorilla/mux"
 	"github.com/xhermitx/gitpulse-01/resume-parser/types"
+	"github.com/xhermitx/gitpulse-01/resume-parser/utils"
 )
 
 const (
-	// TODO: Add other drive link patterns
-	GOOGLE_PATTERN = `https://drive\.google\.com/drive/folders/([0-9A-Za-z-_]+)`
-
-	JOB_STATUS_QUEUE = "JOB_STATUS_QUEUE"
+	QUEUE__JOB_STATUS    = "JOB_STATUS_QUEUE"
+	CACHE__JOB_STATUS    = "JOB_STATUS_CACHE"
+	CACHE__FAILED_RESUME = "FAILED_RESUME_CACHE"
 )
 
 type APIServer struct {
@@ -28,11 +26,12 @@ type APIServer struct {
 	cache   types.KVStore
 }
 
-func NewAPIServer(addr string, d types.Drive, q types.Queue) *APIServer {
+func NewAPIServer(addr string, d types.Drive, q types.Queue, c types.KVStore) *APIServer {
 	return &APIServer{
 		addr:    addr,
 		storage: d,
 		queue:   q,
+		cache:   c,
 	}
 }
 
@@ -40,7 +39,6 @@ func (s *APIServer) Run() error {
 	router := mux.NewRouter()
 
 	subrouter := router.PathPrefix("/api/v1").Subrouter().StrictSlash(true)
-
 	subrouter.HandleFunc("/trigger/{provider}", s.TriggerHandler).Methods(http.MethodPost)
 
 	log.Printf("Listening on %s", s.addr)
@@ -54,133 +52,101 @@ func (s *APIServer) TriggerHandler(w http.ResponseWriter, r *http.Request) {
 
 	var trigger types.TriggerRequest
 	if err := json.NewDecoder(r.Body).Decode(&trigger); err != nil {
-		errResponseWriter(w, http.StatusBadRequest, err)
+		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
 		return
 	}
 
-	folderId, err := extractFolderID(provider, trigger.DriveLink)
+	// Extract folderId from given drive link based on the cloud provider
+	folderId, err := utils.ExtractFolderID(provider, trigger.DriveLink)
 	if err != nil {
-		errResponseWriter(w, http.StatusBadRequest, err)
+		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
 		return
 	}
 
+	// Get a map containing fileId: fileName
 	resumeList, err := s.storage.GetFileList(folderId)
 	if err != nil {
-		errResponseWriter(w, http.StatusInternalServerError, errors.New("couldn't fetch resumes"))
+		utils.ErrResponseWriter(w, http.StatusInternalServerError, errors.New("couldn't fetch files"))
 		return
 	}
 
 	// Flush and close the HTTP connection the before proceeding
-	closeConnection(w)
+	utils.CloseConnection(w)
 
 	var wg sync.WaitGroup
 	wg.Add(len(resumeList))
 
-	for _, resumeId := range resumeList {
+	for fileId, fileName := range resumeList {
 		go func() {
 			defer wg.Done()
-			s.handleResume(resumeId, trigger)
+			s.handleResume(fileId, fileName, trigger)
 		}()
 	}
 	wg.Wait()
-}
 
-func (s *APIServer) handleResume(rId string, trigger types.TriggerRequest) {
-
-	fileName, err := s.cache.Get(context.Background(), rId)
-	if err != nil {
+	// Update the Job Queue status as True
+	if err = s.queue.Publish(QUEUE__JOB_STATUS, types.JobQueue{
+		JobId:  trigger.JobId,
+		Status: true,
+	}); err != nil {
+		// FIXME: Handle this better
 		log.Println(err)
 	}
+}
 
-	type resumeStatus struct {
-		fileName string
-		status   bool
-	}
-
-	content, err := s.storage.GetFileContent(rId)
+func (s *APIServer) handleResume(fId, fName string, trigger types.TriggerRequest) {
+	content, err := s.storage.GetFileContent(fId)
 	if err != nil {
-		// FIXME: Get the filename from Redis using FileId
-		// 		  Update the status of the file as unparsed
-		_ = s.cache.Set(context.Background(), trigger.JobId, resumeStatus{
-			fileName: fileName.(string),
-			status:   false,
-		})
-		_ = err
+		if err := s.cacheFile(fName, trigger.JobId); err != nil {
+			log.Printf("\nfailed parsing %s : %v", fName, err)
+		}
+		log.Println(err)
 	}
 
 	githubIds, err := s.storage.GetUsername(content)
 	if err != nil {
-		// FIXME: Get the filename from Redis using FileId
-		// 		  Update the status of the file as unparsed
-		_ = s.cache.Set(context.Background(), fileName, resumeStatus(resumeStatus{
-			fileName: fileName.(string),
-			status:   false,
-		}))
-		_ = err
+		if err := s.cacheFile(fName, trigger.JobId); err != nil {
+			log.Printf("\nfailed parsing %s : %v", fName, err)
+		}
+		log.Println(err)
 	}
 
 	log.Printf("\n%s : \n%s", trigger.JobId, githubIds)
 
-	// TODO: Push the username along with JobId to RabbitMQ
-	if err = s.queue.Publish(JOB_STATUS_QUEUE, types.StatusQueue{
+	// Push the username along with JobId to RabbitMQ
+	if err = s.queue.Publish(QUEUE__JOB_STATUS, types.JobQueue{
 		JobId:     trigger.JobId,
-		FileId:    rId,
+		Filename:  fName,
 		GithubIDs: githubIds,
+		Status:    false,
 	}); err != nil {
-		// FIXME: Get the filename from Redis using FileId
-		// 		  Update the status of the file as unparsed
-		_ = s.cache.Set(context.Background(), fileName, resumeStatus(resumeStatus{
-			fileName: fileName.(string),
-			status:   false,
-		}))
-		_ = err
+		if err := s.cacheFile(fName, trigger.JobId); err != nil {
+			log.Printf("\nfailed parsing %s : %v", fName, err)
+		}
+		log.Println(err)
 	}
 }
 
-func responseWriter(w http.ResponseWriter, status int, msg any) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
+func (s *APIServer) cacheFile(filename string, jobId string) error {
+	var (
+		key   = CACHE__FAILED_RESUME + jobId
+		files = []string{}
+	)
 
-	return json.NewEncoder(w).Encode(msg)
-}
-
-func errResponseWriter(w http.ResponseWriter, status int, err error) {
-	responseWriter(w, status, map[string]string{"error": err.Error()})
-}
-
-func extractFolderID(provider, link string) (string, error) {
-	var re *regexp.Regexp
-
-	switch provider {
-	case "google":
-		re = regexp.MustCompile(GOOGLE_PATTERN)
-		matches := re.FindStringSubmatch(link)
-		if len(matches) > 1 {
-			// First part is the entire match, second is the captured group
-			return matches[1], nil
+	res, err := s.cache.Get(context.Background(), jobId)
+	if err != nil {
+		return err
+	}
+	if res != "" {
+		err := json.Unmarshal([]byte(res), &files)
+		if err != nil {
+			return err
 		}
 	}
 
-	return "", fmt.Errorf("folder ID not found in link")
-}
-
-func closeConnection(w http.ResponseWriter) {
-	responseWriter(w, http.StatusOK, map[string]string{
-		"Message": "Successfully triggered",
-	})
-	w.(http.Flusher).Flush()
-
-	// Hijack the connection
-	hijacker, ok := w.(http.Hijacker)
-	if !ok {
-		errResponseWriter(w, http.StatusInternalServerError, errors.New("internal error"))
-		return
+	files = append(files, filename)
+	if err := s.cache.Set(context.Background(), key, files, 0); err != nil {
+		return err
 	}
-
-	conn, _, err := hijacker.Hijack()
-	if err != nil {
-		errResponseWriter(w, http.StatusInternalServerError, errors.New("internal error"))
-		return
-	}
-	conn.Close()
+	return nil
 }

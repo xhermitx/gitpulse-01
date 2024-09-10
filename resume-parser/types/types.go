@@ -1,6 +1,9 @@
 package types
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type TriggerRequest struct {
 	JobId     string `json:"job_id"`
@@ -8,7 +11,7 @@ type TriggerRequest struct {
 }
 
 type Drive interface {
-	GetFileList(string) ([]string, error)
+	GetFileList(string) (map[string]string, error)
 	GetFileContent(string) ([]byte, error)
 	GetUsername([]byte) ([]string, error)
 }
@@ -17,13 +20,19 @@ type Queue interface {
 	Publish(string, any) error
 }
 
-type StatusQueue struct {
+type JobQueue struct {
 	JobId     string
-	FileId    string
+	Filename  string
 	GithubIDs []string
+	Status    bool
 }
 
 type KVStore interface {
-	Set(ctx context.Context, key any, value any) error
-	Get(ctx context.Context, key any) (value any, err error)
+	Get(ctx context.Context, key string) (value string, err error)
+	Set(ctx context.Context, key string, value any, t time.Duration) error
+}
+
+type UnparsedFilesCache struct {
+	JobId         string
+	UnparsedFiles []string // Name of the files
 }

@@ -6,103 +6,97 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"os"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/xhermitx/gitpulse-01/resume-parser/config"
-	"github.com/xhermitx/gitpulse-01/resume-parser/types"
 )
 
+// RabbitMQ encapsulates a connection channel to RabbitMQ.
 type RabbitMQ struct {
 	Channel *amqp.Channel
 }
 
+// NewRabbitMQClient initializes a new RabbitMQ client with an existing channel.
 func NewRabbitMQClient(ch *amqp.Channel) *RabbitMQ {
-	return &RabbitMQ{
-		Channel: ch,
-	}
+	return &RabbitMQ{Channel: ch}
 }
 
-// FUNCTION TO PUSH CANDIDATE DATA TO THE MESSAGE QUEUE
+// Publish sends a message to a specified queue in RabbitMQ with a JSON-encoded body.
 func (mq *RabbitMQ) Publish(queueName string, data any) error {
-
+	// Declare a queue to ensure the target queue exists.
 	q, err := mq.Channel.QueueDeclare(
-		queueName, // name
-		false,     // durable
-		false,     // delete when unused
-		false,     // exclusive
-		false,     // no-wait
-		nil,       // arguments
+		queueName, // name of the queue
+		false,     // non-durable (messages won't survive a broker restart)
+		false,     // auto-delete when unused
+		false,     // not exclusive
+		false,     // no-wait (do not wait for the server to confirm queue declaration)
+		nil,       // no additional arguments
 	)
+	if err != nil {
+		return fmt.Errorf("failed to declare a queue: %w", err)
+	}
 
-	failOnError(err, "Failed to declare a queue")
-
+	// Create a context with timeout for publishing the message.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Marshal the message data into JSON format.
 	body, err := json.Marshal(data)
-
-	failOnError(err, fmt.Sprintf("Failed to Parse Status for: %s", data.(types.StatusQueue).JobId))
-
-	if err = mq.Channel.PublishWithContext(ctx,
-		"",
-		q.Name,
-		false,
-		false,
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        []byte(body),
-		}); err != nil {
-		return err
+	if err != nil {
+		return fmt.Errorf("failed to marshal message: %w", err)
 	}
 
-	log.Printf("\n[x] Sent status for job %s", data.(types.StatusQueue).JobId)
+	// Publish the message to the queue.
+	if err = mq.Channel.PublishWithContext(
+		ctx,
+		"",     // exchange (empty string means default exchange)
+		q.Name, // routing key (queue name)
+		false,  // mandatory
+		false,  // immediate
+		amqp.Publishing{
+			ContentType: "application/json", // MIME type of the message body
+			Body:        body,               // message body as a byte slice
+		}); err != nil {
+		return fmt.Errorf("failed to publish message: %w", err)
+	}
 
 	return nil
 }
 
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Panicf("%s: %s", msg, err)
-	}
-}
-
-func Connect(maxRetries int64) (*amqp.Channel, error) {
+// Connect establishes a RabbitMQ connection and channel with retry logic.
+func RMQConnect(maxRetries int64, addr string) (*amqp.Channel, error) {
 	var (
-		counts     int64
-		backOff    = 1 * time.Second
-		connection *amqp.Connection
+		counts     int64             // retry attempt counter
+		backOff    = 1 * time.Second // initial backoff duration
+		connection *amqp.Connection  // RabbitMQ connection
 	)
 
-	log.Println(os.Getenv("RABBITMQ"))
-
-	// Retry with exponential timeout
+	// Retry connecting to RabbitMQ with exponential backoff.
 	for {
-		c, err := amqp.Dial(config.Envs.RMQAddr)
+		conn, err := amqp.Dial(addr)
 		if err != nil {
-			fmt.Println("RabbitMQ not yet ready...")
+			// If connection fails, increment the retry counter and apply backoff.
+			log.Println("RabbitMQ not ready, retrying...")
 			counts++
+			if counts > maxRetries {
+				return nil, fmt.Errorf("reached max retries: %w", err)
+			}
+			// Exponential backoff
+			backOff = time.Duration(math.Pow(2, float64(counts))) * time.Second
+			log.Printf("backing off for %v...\n", backOff)
+			time.Sleep(backOff)
 		} else {
+			// Successful connection
 			log.Println("Connected to RabbitMQ!")
-			connection = c
+			connection = conn
 			break
 		}
-
-		if counts > maxRetries {
-			fmt.Println(err)
-			return nil, err
-		}
-
-		backOff = time.Duration(math.Pow(2, float64(counts))) * time.Second
-		log.Println("backing off...")
-		time.Sleep(backOff)
-		continue
 	}
 
+	// Open a channel on the RabbitMQ connection.
 	channel, err := connection.Channel()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open channel: %w", err)
 	}
 
 	return channel, nil

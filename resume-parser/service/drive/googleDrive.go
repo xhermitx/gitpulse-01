@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	pattern = `github\.com/[a-zA-Z0-9]+(\-[a-zA-Z0-9]*)*`
-	offset  = 11 // To match id after "github.com/"
+	pattern         = `github\.com/[a-zA-Z0-9]+(\-[a-zA-Z0-9]*)*`
+	offset          = 11 // To match id after "github.com/"
+	FILE_NAME_CACHE = "FILE_NAME_CACHE"
 )
 
 type GoogleDrive struct {
@@ -54,7 +55,7 @@ func NewGoogleService() (*drive.Service, error) {
 	return DriveService, nil
 }
 
-func (g *GoogleDrive) GetFileList(folderId string) ([]string, error) {
+func (g *GoogleDrive) GetFileList(folderId string) (map[string]string, error) {
 	// Read files from the Folder
 	query := fmt.Sprintf("'%s' in parents", folderId)
 	res, err := g.DriveService.Files.List().
@@ -66,12 +67,9 @@ func (g *GoogleDrive) GetFileList(folderId string) ([]string, error) {
 		return nil, err
 	}
 
-	var fileList []string
+	fileList := make(map[string]string)
 	for _, file := range res.Files {
-		// TODO: Store file.Id:file.Name along with its
-		//       status(parsed/unparsed) in Redis
-		// 		 To be referred when there is an error
-		fileList = append(fileList, file.Id)
+		fileList[file.Id] = file.Name
 	}
 	return fileList, nil
 }
