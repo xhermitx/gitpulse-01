@@ -18,6 +18,7 @@ type Config struct {
 
 	RabbitMQAddr string
 	RedisAddr    string
+	GithubToken  string
 }
 
 func initConfig() Config {
@@ -25,7 +26,13 @@ func initConfig() Config {
 		log.Println("ERROR LOADING ENVIRONMENT VARIABLES: ", err)
 	}
 	return Config{
+		DBUser:       getEnv("DB_USER", ""),
+		DBPassword:   getEnv("DB_PASSWORD", ""),
+		DBAddress:    getEnv("DB_ADDR", ""),
+		DBName:       getEnv("DB_NAME", ""),
 		RabbitMQAddr: getEnv("RABBITMQ_ADDR", ""),
+		RedisAddr:    getEnv("REDIS_ADDR", ""),
+		GithubToken:  getEnv("GITHUB_TOKEN", ""),
 	}
 }
 
@@ -33,6 +40,5 @@ func getEnv(key, fallback string) string {
 	if val, ok := os.LookupEnv(key); ok {
 		return val
 	}
-
 	return fallback
 }

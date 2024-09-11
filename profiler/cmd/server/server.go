@@ -1,10 +1,12 @@
 package server
 
 import (
+	"encoding/json"
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/xhermitx/gitpulse-01/profiler/types"
+	"github.com/xhermitx/gitpulse-01/profiler/utils"
 )
 
 const (
@@ -46,6 +48,11 @@ func (s Server) handleQueueData(msgs <-chan amqp.Delivery) {
 	}
 
 	for d := range msgs {
-		_ = d
+		var jobQueue types.JobQueue
+		if err := json.Unmarshal(d.Body, &jobQueue); err != nil {
+			utils.LogError(err, "failed to parse candidate data")
+			// FIXME: save the candidate name as unparsed
+		}
+
 	}
 }
