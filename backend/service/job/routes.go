@@ -2,7 +2,6 @@ package job
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -15,23 +14,26 @@ import (
 type message map[string]any
 
 type Handler struct {
-	jobStore  types.JobStore
-	userStore types.UserStore
+	jobStore       types.JobStore
+	userStore      types.UserStore
+	candidateStore types.CandidateStore
 }
 
-func NewHandler(jobStore types.JobStore, userStore types.UserStore) *Handler {
+func NewHandler(jobStore types.JobStore, userStore types.UserStore, candidateStore types.CandidateStore) *Handler {
 	return &Handler{
-		jobStore:  jobStore,
-		userStore: userStore,
+		jobStore:       jobStore,
+		userStore:      userStore,
+		candidateStore: candidateStore,
 	}
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/create", auth.AuthMiddleware(h.CreateJobHandler, h.userStore)).Methods("POST")
-	router.HandleFunc("/udpate", auth.AuthMiddleware(h.UpdateJobHandler, h.userStore)).Methods("PATCH")
-	router.HandleFunc("/delete", auth.AuthMiddleware(h.DeleteJobHandler, h.userStore)).Methods("DELETE")
-	router.HandleFunc("/list", auth.AuthMiddleware(h.ListJobHandler, h.userStore)).Methods("GET")
-	router.HandleFunc("/trigger", auth.AuthMiddleware(h.TriggerJobHandler, h.userStore)).Methods("POST")
+	router.HandleFunc("/create", auth.AuthMiddleware(h.CreateJobHandler, h.userStore)).Methods(http.MethodPost)
+	router.HandleFunc("/udpate", auth.AuthMiddleware(h.UpdateJobHandler, h.userStore)).Methods(http.MethodPatch)
+	router.HandleFunc("/delete", auth.AuthMiddleware(h.DeleteJobHandler, h.userStore)).Methods(http.MethodDelete)
+	router.HandleFunc("/list", auth.AuthMiddleware(h.ListJobHandler, h.userStore)).Methods(http.MethodGet)
+	router.HandleFunc("/trigger", auth.AuthMiddleware(h.TriggerJobHandler, h.userStore)).Methods(http.MethodPost)
+	router.HandleFunc("/result/{count}", auth.AuthMiddleware(h.ResultHandler, h.userStore)).Methods(http.MethodGet)
 }
 
 func (h *Handler) CreateJobHandler(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +61,6 @@ func (h *Handler) CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateJobHandler(w http.ResponseWriter, r *http.Request) {
-
 	var job types.Job
 	if err := utils.ParseRequestBody(r, &job); err != nil {
 		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
@@ -89,9 +90,6 @@ func (h *Handler) DeleteJobHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
 		return
 	}
-
-	log.Println("job_id: ", job.JobId)
-
 	if !h.checkJobExists(w, job.JobId) {
 		return
 	}
@@ -110,7 +108,6 @@ func (h *Handler) DeleteJobHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListJobHandler(w http.ResponseWriter, r *http.Request) {
-
 	id := r.Context().Value(types.UserContext("user_id")).(string)
 
 	jobs, err := h.jobStore.ListJobs(id)
@@ -123,13 +120,63 @@ func (h *Handler) ListJobHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "Fetched Job List",
 		"jobs":    jobs,
 	}
-
 	utils.ResponseWriter(w, http.StatusFound, payload)
 }
 
 func (h *Handler) TriggerJobHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: To be implemented
-	// 		 Remember to provide the {cloudprovide in the request param}
+	// 		 Remember to provide the {cloudprovider} in the request param}
+}
+
+func (h *Handler) ResultHandler(w http.ResponseWriter, r *http.Request) {
+	var payload types.JobResultPayload
+	if err := utils.ParseRequestBody(r, &payload); err != nil {
+		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
+		return
+	}
+	if !h.checkJobExists(w, payload.JobId) {
+		return
+	}
+
+	candidateList, err := h.candidateStore.GetCandidateList(payload.JobId)
+	if err != nil {
+		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
+	}
+
+	var (
+		sumContributions           = 0
+		sumFollowers               = 0
+		sumTopRepoStars            = 0
+		sumTopContributedRepoStars = 0
+		sumLanguages               = 0
+		sumTopics                  = 0
+	)
+
+	for _, c := range candidateList {
+		sumContributions += c.TotalContributions
+		sumFollowers += c.TotalFollowers
+		sumTopRepoStars += c.TopRepoStars
+		sumTopContributedRepoStars += c.TopContributedRepoStars
+		sumLanguages += len(c.Languages)
+		sumTopics += len(c.Topics)
+	}
+
+	for _, c := range candidateList {
+		c.Score += c.TotalContributions/sumContributions*20 +
+			c.TotalFollowers/sumFollowers*5 +
+			c.TopRepoStars/sumTopRepoStars*25 +
+			c.TopContributedRepoStars/sumTopContributedRepoStars*25 +
+			len(c.Languages)/sumLanguages*15 +
+			len(c.Topics)/sumTopics*10
+
+		// TODO: Add the candidate to a heap of size payload.Count
+	}
+
+	_ = candidateList
+	utils.ResponseWriter(w, http.StatusOK, message{
+		"message": "Result Candidates",
+		"List":    candidateList,
+	})
 }
 
 func (h *Handler) checkJobExists(w http.ResponseWriter, jobId string) bool {

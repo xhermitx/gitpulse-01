@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/xhermitx/gitpulse-01/backend/service/candidate"
 	"github.com/xhermitx/gitpulse-01/backend/service/job"
 	"github.com/xhermitx/gitpulse-01/backend/service/user"
 	"gorm.io/gorm"
@@ -27,18 +28,20 @@ func (s *APIServer) Run() error {
 	router := mux.NewRouter()
 	subrouter := router.PathPrefix("/api/v1").Subrouter().StrictSlash(true)
 
-	userStore := user.NewStore(s.db)
+	var (
+		userStore      = user.NewStore(s.db)
+		jobStore       = job.NewStore(s.db)
+		candidateStore = candidate.NewStore(s.db)
+	)
+
 	userHandler := user.NewHandler(userStore)
 	userHandler.RegisterRoutes(subrouter.PathPrefix("/user").Subrouter())
 
-	jobStore := job.NewStore(s.db)
-	jobHandler := job.NewHandler(jobStore, userStore)
+	jobHandler := job.NewHandler(jobStore, userStore, candidateStore)
 	jobHandler.RegisterRoutes(subrouter.PathPrefix("/job").Subrouter())
 
 	subrouter.HandleFunc("/", Greetings)
-
 	log.Println("Listening on", s.addr)
-
 	return http.ListenAndServe(s.addr, router)
 }
 

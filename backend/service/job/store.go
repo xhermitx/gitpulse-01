@@ -16,11 +16,9 @@ func NewStore(db *gorm.DB) *Store {
 }
 
 func (s *Store) CreateJob(job types.Job) error {
-
 	if res := s.db.Create(&job); res.Error != nil {
 		return res.Error
 	}
-
 	return nil
 }
 
@@ -49,10 +47,8 @@ func (s *Store) ListJobs(userId string) ([]types.Job, error) {
 
 func (s *Store) FindJobById(jobId string) (*types.Job, error) {
 	var job types.Job
-
 	if res := s.db.First(&job, "job_id = ?", jobId); res.Error != nil {
 		return nil, res.Error
 	}
-
 	return &job, nil
 }

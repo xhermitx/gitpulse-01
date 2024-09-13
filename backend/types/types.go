@@ -56,26 +56,35 @@ type DeleteUserPayload struct {
 	UserId string `json:"user_id"`
 }
 
-type Candidate struct {
-	Name        string `json:"name"`
-	Username    string `json:"login"`
-	AccountType string `json:"__typename" gorm:"-"` // This will hold "User" or "Organization"
-	AvatarURL   string `json:"avatarUrl"`
-	Bio         string `json:"bio"`
-	Email       string `json:"email"`
-	WebsiteURL  string `json:"websiteUrl"`
+type CandidateStore interface {
+	GetCandidateList(string) ([]*Candidate, error)
 }
 
-type ProfiledCandidate struct {
-	Candidate
-	CandidateId                       string `gorm:"primary_key"`
-	TotalContributions                int
-	TotalFollowers                    int
-	MostPopularRepo                   string
-	MostPopularRepoStars              int
-	MostPopularRepoContributedTo      string
-	MostPopularRepoContributedToStars int
-	RelevantTechUsed                  int
-	RelevantTopicsUsed                int
-	JobId                             string `gorm:"unique"`
+type CandidateMeta struct {
+	Name       string `json:"name"`
+	Username   string `json:"login"`
+	AvatarURL  string `json:"avatarUrl"`
+	Bio        string `json:"bio"`
+	Email      string `json:"email"`
+	WebsiteURL string `json:"websiteUrl"`
+}
+
+type Candidate struct {
+	CandidateMeta
+	CandidateId             string   `json:"candidate_id" gorm:"primary_key"`
+	TotalContributions      int      `json:"total_contributions"`
+	TotalFollowers          int      `json:"total_followers"`
+	TopRepo                 string   `json:"top_repo"`
+	TopRepoStars            int      `json:"top_repo_stars"`
+	TopContributedRepo      string   `json:"top_contributed_repo"`
+	TopContributedRepoStars int      `json:"top_contributed_repo_stars"`
+	Languages               []string `json:"languages"`
+	Topics                  []string `json:"topics"`
+	JobId                   string   `json:"job_id" gorm:"unique"`
+	Score                   int      `json:"score" gorm:"-"`
+}
+
+type JobResultPayload struct {
+	JobId string `json:"job_id"`
+	Count string `json:"count"`
 }

@@ -10,8 +10,6 @@ require (
 	gorm.io/gorm v1.25.11
 )
 
-require github.com/xhermitx/my-utils v0.0.0-20240910030802-724cdb129e72 // indirect
-
 require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.6.0
