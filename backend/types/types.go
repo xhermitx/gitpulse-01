@@ -57,14 +57,25 @@ type DeleteUserPayload struct {
 }
 
 type Candidate struct {
-	CandidateId     string `json:"candidate_id,omitempty" gorm:"primary_key"`
-	GithubId        string `json:"github_id,omitempty" gorm:"unique, not null"`
-	Followers       uint   `json:"followers,omitempty" gorm:"not null"`
-	Contributions   uint   `json:"contributions,omitempty" gorm:"not null"`
-	MostPopularRepo string `json:"most_popular_repo,omitempty" gorm:"not null"`
-	RepoStars       uint   `json:"repo_stars,omitempty" gorm:"not null"`
-	Score           int    `json:"score,omitempty" gorm:"not null"`
-	JobId           string `json:"job_id" gorm:"not null"`
+	Name        string `json:"name"`
+	Username    string `json:"login"`
+	AccountType string `json:"__typename" gorm:"-"` // This will hold "User" or "Organization"
+	AvatarURL   string `json:"avatarUrl"`
+	Bio         string `json:"bio"`
+	Email       string `json:"email"`
+	WebsiteURL  string `json:"websiteUrl"`
 }
 
-// type UserContext string
+type ProfiledCandidate struct {
+	Candidate
+	CandidateId                       string `gorm:"primary_key"`
+	TotalContributions                int
+	TotalFollowers                    int
+	MostPopularRepo                   string
+	MostPopularRepoStars              int
+	MostPopularRepoContributedTo      string
+	MostPopularRepoContributedToStars int
+	RelevantTechUsed                  int
+	RelevantTopicsUsed                int
+	JobId                             string `gorm:"unique"`
+}

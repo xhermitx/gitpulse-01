@@ -28,8 +28,6 @@ const (
 					__typename
 					avatarUrl
 					bio
-					company
-					location
 					email
 					websiteUrl
 					followers {
@@ -39,11 +37,7 @@ const (
 					# Fetch contributions data
 					contributionsCollection {
 						contributionCalendar {
-							weeks {
-							contributionDays {
-								contributionCount
-								date
-							}
+								totalContributions
 							}
 						}
 					}
@@ -102,8 +96,7 @@ const (
 			}`
 )
 
-func (g *GitService) FetchUserDetails(github_id string) (*types.Candidate, error) {
-
+func (g *GitService) FetchUserDetails(github_id string) (*types.GitUser, error) {
 	ghQuery := types.GitQuery{
 		Query: query,
 		Variables: map[string]string{
@@ -145,9 +138,10 @@ func (g *GitService) FetchUserDetails(github_id string) (*types.Candidate, error
 	if len(ghResp.Errors) > 0 {
 		return nil, fmt.Errorf("error occured while fetching username: %v", ghResp.Errors)
 	}
-	if ghResp.Data.Candidate.AccountType != "User" {
-		return nil, fmt.Errorf("username %s is not of type user", ghResp.Data.Candidate.Username)
+	if ghResp.Data.User.AccountType != "User" {
+		return nil, fmt.Errorf("username %s is not of type user", ghResp.Data.User.Username)
 	}
 
-	return &ghResp.Data.Candidate, nil
+	// FIXME:
+	return &ghResp.Data.User, nil
 }

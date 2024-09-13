@@ -1,14 +1,22 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE `candidates` (
-  `candidate_id`      VARCHAR(255) NOT NULL UNIQUE,
-  `github_id`         VARCHAR(255) NOT NULL,
-  `followers`         INT,
-  `contributions`     INT,
-  `most_popular_repo` VARCHAR(255),
-  `repo_stars`        INT,
-  `score`             INT,
-  `job_id`            VARCHAR(255),
+  `candidate_id`                           VARCHAR(255) NOT NULL UNIQUE,
+  `name`                                   VARCHAR(255) NOT NULL,
+  `username`                               VARCHAR(255) NOT NULL,
+  `avatar_url`                             VARCHAR(255),
+  `bio`                                    VARCHAR(255),
+  `email`                                  VARCHAR(255),
+  `website_url`                            VARCHAR(255),
+  `total_contributions`                    INT,
+  `total_followers`                        INT,
+  `top_created_repo`                       VARCHAR(255),
+  `top_created_repo_stars`                 INT,
+  `top_contributed_repo`                   VARCHAR(255),
+  `top_contributed_repo_stars`             INT,
+  `relevant_tech_used`                     INT,
+  `relevant_topics_used`                   INT,
+  `job_id`                                 VARCHAR(255),
   PRIMARY KEY (`candidate_id`),
   FOREIGN KEY (`job_id`) REFERENCES `jobs` (`job_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB;

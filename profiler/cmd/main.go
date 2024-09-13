@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"log"
@@ -8,9 +8,9 @@ import (
 	"github.com/xhermitx/gitpulse-01/profiler/cmd/server"
 	"github.com/xhermitx/gitpulse-01/profiler/configs"
 	"github.com/xhermitx/gitpulse-01/profiler/service/cache"
-	"github.com/xhermitx/gitpulse-01/profiler/service/candidate"
 	"github.com/xhermitx/gitpulse-01/profiler/service/git"
 	"github.com/xhermitx/gitpulse-01/profiler/service/queue"
+	"github.com/xhermitx/gitpulse-01/profiler/service/store"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -43,7 +43,7 @@ func main() {
 		DB:       0,
 	})
 
-	s := candidate.NewCandidateStore(db)
+	s := store.NewStore(db)
 	g := git.NewGitService()
 	r := queue.NewRabbitMQClient(ch)
 	c := cache.NewRedisClient(rdb)
@@ -57,6 +57,5 @@ func newMySQLStorage(cfg mysql.Config) (*gorm.DB, error) {
 	if err != nil {
 		log.Println(err)
 	}
-
 	return db, nil
 }
