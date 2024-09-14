@@ -1,7 +1,7 @@
 package candidate
 
 import (
-	"github.com/xhermitx/gitpulse-01/backend/types"
+	results "github.com/xhermitx/gitpulse-results"
 	"gorm.io/gorm"
 )
 
@@ -15,8 +15,8 @@ func NewStore(db *gorm.DB) Store {
 	}
 }
 
-func (s Store) GetCandidateList(jobId string) ([]*types.Candidate, error) {
-	var list []*types.Candidate
+func (s Store) GetCandidateList(jobId string) ([]*results.Candidate, error) {
+	var list []*results.Candidate
 	if res := s.db.Find(list, "job_id = ?", jobId); res.Error != nil {
 		return nil, res.Error
 	}

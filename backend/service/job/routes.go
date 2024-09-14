@@ -1,14 +1,18 @@
 package job
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/xhermitx/gitpulse-01/backend/config"
 	"github.com/xhermitx/gitpulse-01/backend/service/auth"
 	"github.com/xhermitx/gitpulse-01/backend/types"
 	"github.com/xhermitx/gitpulse-01/backend/utils"
+	results "github.com/xhermitx/gitpulse-results"
 )
 
 type message map[string]any
@@ -67,7 +71,7 @@ func (h *Handler) UpdateJobHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.checkJobExists(w, job.JobId) {
+	if _, ok := h.checkJobExists(w, job.JobId); !ok {
 		return
 	}
 
@@ -90,7 +94,7 @@ func (h *Handler) DeleteJobHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
 		return
 	}
-	if !h.checkJobExists(w, job.JobId) {
+	if _, ok := h.checkJobExists(w, job.JobId); !ok {
 		return
 	}
 
@@ -124,8 +128,42 @@ func (h *Handler) ListJobHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) TriggerJobHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: To be implemented
-	// 		 Remember to provide the {cloudprovider} in the request param}
+	var payload types.TriggerJobPayload
+	if err := utils.ParseRequestBody(r, &payload); err != nil {
+		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
+		return
+	}
+
+	job, ok := h.checkJobExists(w, payload.JobId)
+	if !ok {
+		return
+	}
+
+	provider := "/google"
+	payload.DriveLink = job.DriveLink
+	body, err := json.Marshal(payload)
+	if err != nil {
+		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	req, err := http.NewRequest(http.MethodPost, config.Envs.ParserURL+provider, bytes.NewBuffer(body))
+	if err != nil {
+		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	client := http.Client{}
+	res, err := client.Do(req)
+	if err != nil || res.StatusCode != http.StatusOK {
+		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer res.Body.Close()
+
+	utils.ResponseWriter(w, http.StatusOK, message{
+		"message": "Job Profiling Started!",
+	})
 }
 
 func (h *Handler) ResultHandler(w http.ResponseWriter, r *http.Request) {
@@ -134,7 +172,7 @@ func (h *Handler) ResultHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
 		return
 	}
-	if !h.checkJobExists(w, payload.JobId) {
+	if _, ok := h.checkJobExists(w, payload.JobId); !ok {
 		return
 	}
 
@@ -143,51 +181,23 @@ func (h *Handler) ResultHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
 	}
 
-	var (
-		sumContributions           = 0
-		sumFollowers               = 0
-		sumTopRepoStars            = 0
-		sumTopContributedRepoStars = 0
-		sumLanguages               = 0
-		sumTopics                  = 0
-	)
+	topCanidates := results.TopNCandidates(candidateList, payload.Count)
 
-	for _, c := range candidateList {
-		sumContributions += c.TotalContributions
-		sumFollowers += c.TotalFollowers
-		sumTopRepoStars += c.TopRepoStars
-		sumTopContributedRepoStars += c.TopContributedRepoStars
-		sumLanguages += len(c.Languages)
-		sumTopics += len(c.Topics)
-	}
-
-	for _, c := range candidateList {
-		c.Score += c.TotalContributions/sumContributions*20 +
-			c.TotalFollowers/sumFollowers*5 +
-			c.TopRepoStars/sumTopRepoStars*25 +
-			c.TopContributedRepoStars/sumTopContributedRepoStars*25 +
-			len(c.Languages)/sumLanguages*15 +
-			len(c.Topics)/sumTopics*10
-
-		// TODO: Add the candidate to a heap of size payload.Count
-	}
-
-	_ = candidateList
 	utils.ResponseWriter(w, http.StatusOK, message{
 		"message": "Result Candidates",
-		"List":    candidateList,
+		"List":    topCanidates, // FIXME: Add the result from heap
 	})
 }
 
-func (h *Handler) checkJobExists(w http.ResponseWriter, jobId string) bool {
+func (h *Handler) checkJobExists(w http.ResponseWriter, jobId string) (*types.Job, bool) {
 	res, err := h.jobStore.FindJobById(jobId)
 	if res == nil {
 		utils.ErrResponseWriter(w, http.StatusConflict, errors.New("job does not exist"))
-		return false
+		return nil, false
 	}
 	if err != nil {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
-		return false
+		return nil, false
 	}
-	return true
+	return res, true
 }

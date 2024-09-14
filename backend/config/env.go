@@ -22,6 +22,8 @@ type Config struct {
 
 	AuthSecret    string
 	JWTExpiration time.Duration
+
+	ParserURL string
 }
 
 func initConfig() Config {
@@ -36,6 +38,7 @@ func initConfig() Config {
 		DBName:        getEnv("DB_NAME", ""),
 		AuthSecret:    getEnv("AUTH_SECRET", "random_string"),
 		JWTExpiration: time.Duration(time.Hour * 24 * 30), // 30 Days
+		ParserURL:     getEnv("PARSER_SERVICE_URL", ""),
 	}
 }
 

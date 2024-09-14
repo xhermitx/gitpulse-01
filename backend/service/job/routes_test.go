@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/xhermitx/gitpulse-01/backend/types"
+	results "github.com/xhermitx/gitpulse-results"
 )
 
 func TestJobHandlers(t *testing.T) {
@@ -76,6 +77,6 @@ func (s *mockUserStore) FindUserByUsername(_ string) (*types.User, error) {
 
 type mockCandidateStore struct{}
 
-func (s mockCandidateStore) GetCandidateList(_ string) ([]*types.Candidate, error) {
+func (s mockCandidateStore) GetCandidateList(_ string) ([]*results.Candidate, error) {
 	panic("unimplemented")
 }

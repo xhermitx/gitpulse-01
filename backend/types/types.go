@@ -1,6 +1,10 @@
 package types
 
-import "time"
+import (
+	"time"
+
+	results "github.com/xhermitx/gitpulse-results"
+)
 
 type UserStore interface {
 	CreateUser(User) error
@@ -48,6 +52,16 @@ type Job struct {
 	UserId      string    `json:"user_id" gorm:"not null"`
 }
 
+type TriggerJobPayload struct {
+	JobId     string `json:"job_id"`
+	DriveLink string `json:"drive_link"`
+}
+
+type ParserPayload struct {
+	JobId     string `json:"job_id"`
+	DriveLink string `json:"drive_link"`
+}
+
 type DeleteJobPayload struct {
 	JobId string `json:"job_id"`
 }
@@ -57,34 +71,10 @@ type DeleteUserPayload struct {
 }
 
 type CandidateStore interface {
-	GetCandidateList(string) ([]*Candidate, error)
-}
-
-type CandidateMeta struct {
-	Name       string `json:"name"`
-	Username   string `json:"login"`
-	AvatarURL  string `json:"avatarUrl"`
-	Bio        string `json:"bio"`
-	Email      string `json:"email"`
-	WebsiteURL string `json:"websiteUrl"`
-}
-
-type Candidate struct {
-	CandidateMeta
-	CandidateId             string   `json:"candidate_id" gorm:"primary_key"`
-	TotalContributions      int      `json:"total_contributions"`
-	TotalFollowers          int      `json:"total_followers"`
-	TopRepo                 string   `json:"top_repo"`
-	TopRepoStars            int      `json:"top_repo_stars"`
-	TopContributedRepo      string   `json:"top_contributed_repo"`
-	TopContributedRepoStars int      `json:"top_contributed_repo_stars"`
-	Languages               []string `json:"languages"`
-	Topics                  []string `json:"topics"`
-	JobId                   string   `json:"job_id" gorm:"unique"`
-	Score                   int      `json:"score" gorm:"-"`
+	GetCandidateList(string) ([]*results.Candidate, error)
 }
 
 type JobResultPayload struct {
 	JobId string `json:"job_id"`
-	Count string `json:"count"`
+	Count int    `json:"count"`
 }
