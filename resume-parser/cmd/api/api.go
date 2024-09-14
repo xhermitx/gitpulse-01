@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	QUEUE__JOB_STATUS    = "JOB_STATUS_QUEUE"
-	CACHE__JOB_STATUS    = "JOB_STATUS_CACHE"
-	CACHE__FAILED_RESUME = "FAILED_RESUME_CACHE"
+	QUEUE__JOB_STATUS     = "JOB_STATUS_QUEUE"
+	PARSED_CACHE_PREFIX   = "PARSED: "
+	UNPARSED_CACHE_PREFIX = "UNPARSED: "
 )
 
 type APIServer struct {
@@ -69,6 +69,11 @@ func (s *APIServer) TriggerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Store the number of files in the Cache
+	if err := s.cache.Set(context.Background(), trigger.JobId, len(resumeList), 0); err != nil {
+		log.Printf("\nfailed to cache resume count %s: %v", trigger.JobId, err)
+	}
+
 	// Flush and close the HTTP connection the before proceeding
 	utils.CloseConnection(w)
 
@@ -118,33 +123,14 @@ func (s *APIServer) handleResume(fId, fName string, trigger types.TriggerRequest
 		Filename:  fName,
 		GithubIDs: githubIds,
 		Status:    false,
-	}); err != nil {
-		if err := s.cacheFile(fName, trigger.JobId); err != nil {
-			log.Printf("\nfailed parsing %s : %v", fName, err)
-		}
-		log.Println(err)
+	}); err != nil && s.cacheFile(fName, trigger.JobId) != nil {
+		log.Printf("\nfailed to publish %s : %v", fName, err)
 	}
 }
 
 func (s *APIServer) cacheFile(filename string, jobId string) error {
-	var (
-		key   = CACHE__FAILED_RESUME + jobId
-		files = []string{}
-	)
-
-	res, err := s.cache.Get(context.Background(), jobId)
-	if err != nil {
-		return err
-	}
-	if res != "" {
-		err := json.Unmarshal([]byte(res), &files)
-		if err != nil {
-			return err
-		}
-	}
-
-	files = append(files, filename)
-	if err := s.cache.Set(context.Background(), key, files, 0); err != nil {
+	key := UNPARSED_CACHE_PREFIX + jobId
+	if err := s.cache.Append(context.Background(), key, filename+" "); err != nil {
 		return err
 	}
 	return nil

@@ -185,7 +185,7 @@ func (h *Handler) ResultHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.ResponseWriter(w, http.StatusOK, message{
 		"message": "Result Candidates",
-		"List":    topCanidates, // FIXME: Add the result from heap
+		"List":    topCanidates,
 	})
 }
 

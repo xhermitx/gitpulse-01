@@ -1,8 +1,11 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -11,27 +14,29 @@ import (
 )
 
 const (
-	QUEUE__JOB_STATUS = "JOB_STATUS_QUEUE"
+	QUEUE__JOB_STATUS     = "JOB_STATUS_QUEUE"
+	UNPARSED_CACHE_PREFIX = "UNPARSED: "
+	PARSED_CACHE_PREFIX   = "PARSED: "
 )
 
 type Server struct {
-	Store types.CandidateStore
-	Git   types.GitService
-	Queue types.Queue
-	Cache types.Cache
+	store types.CandidateStore
+	git   types.GitService
+	queue types.Queue
+	cache types.Cache
 }
 
 func NewServer(s types.CandidateStore, g types.GitService, q types.Queue, c types.Cache) Server {
 	return Server{
-		Store: s,
-		Git:   g,
-		Queue: q,
-		Cache: c,
+		store: s,
+		git:   g,
+		queue: q,
+		cache: c,
 	}
 }
 
 func (s Server) Run() error {
-	msgs, err := s.Queue.Subscribe(QUEUE__JOB_STATUS)
+	msgs, err := s.queue.Subscribe(QUEUE__JOB_STATUS)
 	if err != nil {
 		return err
 	}
@@ -52,20 +57,36 @@ func (s Server) handleQueueData(msgs <-chan amqp.Delivery) {
 		var jobQueue types.JobQueue
 		if err := json.Unmarshal(d.Body, &jobQueue); err != nil {
 			utils.LogError(err, "failed to parse candidate data")
-			// FIXME: save the candidate name as unparsed
+			if err := s.cache.Append(context.Background(), UNPARSED_CACHE_PREFIX+jobQueue.JobId, jobQueue.Filename+" "); err != nil {
+				fmt.Printf("\nfailed to cache %s: %v", jobQueue.Filename, err)
+			}
 		}
 		// Fetch user details from git
 		for _, id := range jobQueue.GithubIDs {
-			res, err := s.Git.FetchUserDetails(id)
+			res, err := s.git.FetchUserDetails(id)
 			if err != nil {
-				// FIXME: Handle error
-				_ = err
+				// FIXME: Handle this Better
+				fmt.Printf("\nError fetching details for %s: %v", id, err)
+				continue
 			}
 
 			// Store Git response in DB
 			if err := s.handleGitData(jobQueue.JobId, res); err != nil {
-				// FIXME: Handle error
-				_ = err
+				// FIXME: Handle this Better
+				fmt.Printf("\nError saving details for %s: %v", id, err)
+				continue
+			}
+			tmp, err := s.cache.Get(context.Background(), PARSED_CACHE_PREFIX+jobQueue.JobId)
+			if err != nil {
+				log.Println("Failed to get PARSED CACHE", err)
+			}
+			n, err := strconv.Atoi(tmp)
+			if err != nil {
+				log.Println("failed to convert the cache value to int", err)
+				continue
+			}
+			if err := s.cache.Set(context.Background(), PARSED_CACHE_PREFIX+id, n+1, 0); err != nil {
+				log.Println("failed to update PARSED CACHE")
 			}
 		}
 	}
@@ -93,7 +114,7 @@ func (s Server) handleGitData(jobId string, u *types.GitUser) error {
 	}
 
 	// Store in DB
-	if err := s.Store.SaveCandidate(&candidate); err != nil {
+	if err := s.store.SaveCandidate(&candidate); err != nil {
 		return err
 	}
 

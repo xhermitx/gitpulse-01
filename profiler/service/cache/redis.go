@@ -41,3 +41,11 @@ func (rc *RedisClient) Set(ctx context.Context, key string, value any, expiratio
 	}
 	return nil
 }
+
+func (rc *RedisClient) Append(ctx context.Context, key string, value string) error {
+	res := rc.client.Append(ctx, key, value)
+	if res.Err() != nil {
+		return res.Err()
+	}
+	return nil
+}

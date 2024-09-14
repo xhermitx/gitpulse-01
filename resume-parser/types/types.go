@@ -30,6 +30,7 @@ type JobQueue struct {
 type KVStore interface {
 	Get(ctx context.Context, key string) (value string, err error)
 	Set(ctx context.Context, key string, value any, t time.Duration) error
+	Append(ctx context.Context, key string, value string) error
 }
 
 type UnparsedFilesCache struct {

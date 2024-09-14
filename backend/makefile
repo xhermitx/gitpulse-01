@@ -2,13 +2,13 @@
 include .env
 
 build:
-	@go build -o bin/resume-parser cmd/main.go
+	@go build -o bin/backend cmd/main.go
 
 test:
 	@go test -v ./...
 
 run:
-	@./bin/resume-parser
+	@./bin/backend
 
 migrate-status:
 	@goose -dir ./db/migrations mysql "${DSN}" status

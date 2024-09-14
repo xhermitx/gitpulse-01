@@ -142,6 +142,5 @@ func (g *GitService) FetchUserDetails(github_id string) (*types.GitUser, error) 
 		return nil, fmt.Errorf("username %s is not of type user", ghResp.Data.User.Username)
 	}
 
-	// FIXME:
 	return &ghResp.Data.User, nil
 }
