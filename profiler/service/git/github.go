@@ -20,87 +20,76 @@ func NewGitService() *GitService {
 
 const (
 	GH_URL = "https://api.github.com/graphql"
-	query  = `query getUserDetails($github_id: String!) {
-				user(login: $github_id) {
-					# Fetch basic user info
-					name
-					login
-					__typename
-					avatarUrl
-					bio
-					email
-					websiteUrl
-					followers {
-						totalCount
-					}
-
-					# Fetch contributions data
-					contributionsCollection {
-						contributionCalendar {
-								totalContributions
-							}
-						}
-					}
-
-					# Fetch repositories created by the user and sort by stars
-					repositories(first: 1, orderBy: { field: STARGAZERS, direction: DESC }, privacy: PUBLIC) {
-						nodes {
-							name
-							description
-							stargazers {
-								totalCount
-							}
-							languages(first: 5) {
-								nodes {
-									name
-								}
-							}
-							repositoryTopics(first: 5) {
-								nodes {
-									topic {
-										name
-									}
-								}
-							}
-							url
-						}
-					}
-
-					# Fetch repositories the user has contributed to (not their own) and sort by stars
-					repositoriesContributedTo(first: 1, orderBy: { field: STARGAZERS, direction: DESC }, privacy: PUBLIC) {
-						nodes {
-							name
-							owner {
-								login
-							}
-							description
-							stargazers {
-								totalCount
-							}
-							languages(first: 5) {
-								nodes {
-									name
-								}
-							}
-							repositoryTopics(first: 5) {
-								nodes {
-									topic {
-										name
-									}
-								}
-							}
-							url
-						}
-					}
+	query  = `query getUserDetails($username: String!) {
+		user(login: $username) {
+		  name
+		  login
+		  __typename
+		  avatarUrl
+		  bio
+		  email
+		  websiteUrl
+		  followers {
+			totalCount
+		  }
+		  repositories(first: 1, orderBy: {field: STARGAZERS, direction: DESC}, privacy: PUBLIC) {
+			nodes {
+			  name
+			  description
+			  url
+			  stargazers {
+				totalCount
+			  }
+			  languages(first: 5) {
+				nodes {
+				  name
 				}
-			}`
+			  }
+			  repositoryTopics(first: 5) {
+				nodes {
+				  topic {
+					name
+				  }
+				}
+			  }
+			}
+		  }
+		  repositoriesContributedTo(first: 1, orderBy: {field: STARGAZERS, direction: DESC}, privacy: PUBLIC) {
+			nodes {
+			  name
+			  description
+			  url
+			  stargazers {
+				totalCount
+			  }
+			  languages(first: 5) {
+				nodes {
+				  name
+				}
+			  }
+			  repositoryTopics(first: 5) {
+				nodes {
+				  topic {
+					name
+				  }
+				}
+			  }
+			}
+		  }
+		  contributionsCollection {
+			contributionCalendar {
+			  totalContributions
+			}
+		  }
+		}
+	  }`
 )
 
 func (g *GitService) FetchUserDetails(github_id string) (*types.GitUser, error) {
 	ghQuery := types.GitQuery{
 		Query: query,
 		Variables: map[string]string{
-			"github_id": github_id,
+			"username": github_id,
 		},
 	}
 

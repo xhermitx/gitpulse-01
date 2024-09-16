@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -28,7 +29,7 @@ func initConfig() Config {
 	return Config{
 		DBUser:       getEnv("DB_USER", ""),
 		DBPassword:   getEnv("DB_PASSWORD", ""),
-		DBAddress:    getEnv("DB_ADDR", ""),
+		DBAddress:    fmt.Sprintf("%s:%s", getEnv("DB_HOST", ""), getEnv("DB_PORT", "")),
 		DBName:       getEnv("DB_NAME", ""),
 		RabbitMQAddr: getEnv("RABBITMQ_ADDR", ""),
 		RedisAddr:    getEnv("REDIS_ADDR", ""),

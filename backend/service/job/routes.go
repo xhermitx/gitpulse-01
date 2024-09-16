@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -139,7 +140,6 @@ func (h *Handler) TriggerJobHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	provider := "/google"
 	payload.DriveLink = job.DriveLink
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -147,7 +147,7 @@ func (h *Handler) TriggerJobHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, err := http.NewRequest(http.MethodPost, config.Envs.ParserURL+provider, bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, config.Envs.ParserURL, bytes.NewBuffer(body))
 	if err != nil {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
 		return
@@ -156,7 +156,8 @@ func (h *Handler) TriggerJobHandler(w http.ResponseWriter, r *http.Request) {
 	client := http.Client{}
 	res, err := client.Do(req)
 	if err != nil || res.StatusCode != http.StatusOK {
-		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
+		log.Println("Status: ", res.StatusCode)
+		utils.ErrResponseWriter(w, http.StatusInternalServerError, errors.New("internal server error"))
 		return
 	}
 	defer res.Body.Close()

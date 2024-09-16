@@ -71,7 +71,7 @@ type DeleteUserPayload struct {
 }
 
 type CandidateStore interface {
-	GetCandidateList(string) ([]*results.Candidate, error)
+	GetCandidateList(string) ([]results.Candidate, error)
 }
 
 type JobResultPayload struct {

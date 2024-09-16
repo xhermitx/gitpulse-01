@@ -17,7 +17,6 @@ type Queue interface {
 
 type JobQueue struct {
 	JobId     string   `json:"job_id"`
-	JobDesc   string   `json:"job_desc"`
 	Filename  string   `json:"filename"`
 	GithubIDs []string `json:"github_ids"`
 	Status    bool     `json:"status"`
@@ -117,7 +116,7 @@ type Candidate struct {
 	TopRepoStars            int
 	TopContributedRepo      string
 	TopContributedRepoStars int
-	Languages               []string
-	Topics                  []string
+	Languages               int
+	Topics                  int
 	JobId                   string `gorm:"unique"`
 }

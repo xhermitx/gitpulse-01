@@ -20,7 +20,31 @@ func NewRabbitMQClient(ch *amqp.Channel) *RabbitMQ {
 }
 
 func (rmq RabbitMQ) Subscribe(queueName string) (<-chan amqp.Delivery, error) {
-	return nil, nil
+	q, err := rmq.Channel.QueueDeclare(
+		queueName, // name
+		false,     // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	msgs, err := rmq.Channel.Consume(
+		q.Name, // queue
+		"",     // consumer
+		true,   // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+	)
+	if err != nil {
+		return nil, err
+	}
+	return msgs, nil
 }
 
 // Connect establishes a RabbitMQ connection and channel with retry logic.

@@ -11,6 +11,20 @@ services:
     volumes:
       - db-store:/var/lib/mysql
     command: ["mysqld", "--default-authentication-plugin=mysql_native_password"]
+  
+  rabbitmq:
+    image: 'rabbitmq:3.12-management'
+    environment:
+      RABBITMQ_DEFAULT_USER: "admin"
+      RABBITMQ_DEFAULT_PASS: "password"
+    ports:
+      - "5672:5672" # RabbitMQ
+      - "15672:15672" # Management interface
+  
+  redis:
+    image: 'redis:7-alpine'
+    ports:
+      - "6379:6379"
 
 volumes:
   db-store:

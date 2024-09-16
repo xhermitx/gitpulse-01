@@ -118,13 +118,16 @@ func (s *APIServer) handleResume(fId, fName string, trigger types.TriggerRequest
 	log.Printf("\n%s : \n%s", trigger.JobId, githubIds)
 
 	// Push the username along with JobId to RabbitMQ
-	if err = s.queue.Publish(QUEUE__JOB_STATUS, types.JobQueue{
+	if err := s.queue.Publish(QUEUE__JOB_STATUS, types.JobQueue{
 		JobId:     trigger.JobId,
 		Filename:  fName,
 		GithubIDs: githubIds,
 		Status:    false,
-	}); err != nil && s.cacheFile(fName, trigger.JobId) != nil {
+	}); err != nil {
 		log.Printf("\nfailed to publish %s : %v", fName, err)
+		if err := s.cacheFile(fName, trigger.JobId); err != nil {
+			log.Printf("\nfailed to cache %s : %v", fName, err)
+		}
 	}
 }
 

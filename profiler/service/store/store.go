@@ -16,7 +16,7 @@ func NewStore(db *gorm.DB) *Store {
 }
 
 func (s Store) SaveCandidate(c *types.Candidate) error {
-	if res := s.db.Create(&c); res.Error != nil {
+	if res := s.db.Create(c); res.Error != nil {
 		return res.Error
 	}
 	return nil

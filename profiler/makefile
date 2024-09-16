@@ -1,4 +1,5 @@
 #!make
+include .env
 
 build:
 	@go build -o bin/profiler cmd/main.go

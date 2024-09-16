@@ -15,9 +15,9 @@ func NewStore(db *gorm.DB) Store {
 	}
 }
 
-func (s Store) GetCandidateList(jobId string) ([]*results.Candidate, error) {
-	var list []*results.Candidate
-	if res := s.db.Find(list, "job_id = ?", jobId); res.Error != nil {
+func (s Store) GetCandidateList(jobId string) ([]results.Candidate, error) {
+	var list []results.Candidate
+	if res := s.db.Find(&list, "job_id = ?", jobId); res.Error != nil {
 		return nil, res.Error
 	}
 	return list, nil

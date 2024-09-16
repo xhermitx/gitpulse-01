@@ -77,6 +77,6 @@ func (s *mockUserStore) FindUserByUsername(_ string) (*types.User, error) {
 
 type mockCandidateStore struct{}
 
-func (s mockCandidateStore) GetCandidateList(_ string) ([]*results.Candidate, error) {
+func (s mockCandidateStore) GetCandidateList(_ string) ([]results.Candidate, error) {
 	panic("unimplemented")
 }

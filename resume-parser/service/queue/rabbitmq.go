@@ -47,7 +47,7 @@ func (mq *RabbitMQ) Publish(queueName string, data any) error {
 	}
 
 	// Publish the message to the queue.
-	if err = mq.Channel.PublishWithContext(
+	if err := mq.Channel.PublishWithContext(
 		ctx,
 		"",     // exchange (empty string means default exchange)
 		q.Name, // routing key (queue name)

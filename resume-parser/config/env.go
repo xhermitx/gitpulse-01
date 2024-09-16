@@ -32,7 +32,7 @@ func initConfig() Config {
 		Port:           getEnv("PORT", "8010"),
 		ServiceAccount: getEnv("CREDENTIALS_JSON", ""),
 		TestFolderId:   getEnv("FOLDER_ID", ""),
-		RMQAddr:        getEnv("RMQAddr", ""),
+		RMQAddr:        getEnv("RABBITMQ_ADDR", ""),
 		RedisAddr:      getEnv("REDIS_ADDR", ""),
 	}
 }

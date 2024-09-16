@@ -21,10 +21,10 @@ type Queue interface {
 }
 
 type JobQueue struct {
-	JobId     string
-	Filename  string
-	GithubIDs []string
-	Status    bool
+	JobId     string   `json:"job_id"`
+	Filename  string   `json:"filename"`
+	GithubIDs []string `json:"github_ids"`
+	Status    bool     `json:"status"`
 }
 
 type KVStore interface {

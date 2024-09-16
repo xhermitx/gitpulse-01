@@ -44,8 +44,7 @@ func (s Server) Run() error {
 	go s.handleQueueData(msgs)
 
 	log.Printf("[*] Waiting for messages. To exit press CTRL+C")
-	<-msgs
-	return nil
+	select {}
 }
 
 func (s Server) handleQueueData(msgs <-chan amqp.Delivery) {
@@ -61,8 +60,12 @@ func (s Server) handleQueueData(msgs <-chan amqp.Delivery) {
 				fmt.Printf("\nfailed to cache %s: %v", jobQueue.Filename, err)
 			}
 		}
+
+		fmt.Println("Queue Msg: ", jobQueue)
+
 		// Fetch user details from git
 		for _, id := range jobQueue.GithubIDs {
+
 			res, err := s.git.FetchUserDetails(id)
 			if err != nil {
 				// FIXME: Handle this Better
@@ -70,16 +73,19 @@ func (s Server) handleQueueData(msgs <-chan amqp.Delivery) {
 				continue
 			}
 
+			fmt.Println("Git User: ", res.Name)
 			// Store Git response in DB
 			if err := s.handleGitData(jobQueue.JobId, res); err != nil {
 				// FIXME: Handle this Better
 				fmt.Printf("\nError saving details for %s: %v", id, err)
 				continue
 			}
+
 			tmp, err := s.cache.Get(context.Background(), PARSED_CACHE_PREFIX+jobQueue.JobId)
 			if err != nil {
 				log.Println("Failed to get PARSED CACHE", err)
 			}
+
 			n, err := strconv.Atoi(tmp)
 			if err != nil {
 				log.Println("failed to convert the cache value to int", err)
@@ -93,48 +99,31 @@ func (s Server) handleQueueData(msgs <-chan amqp.Delivery) {
 }
 
 func (s Server) handleGitData(jobId string, u *types.GitUser) error {
-	languages := getLanguages(u.TopRepo.Nodes[0].Languages)
-	languages = append(languages, getLanguages(u.TopContributedRepo.Nodes[0].Languages)...)
-
-	topics := getTopics(u.TopRepo.Nodes[0].Topics)
-	topics = append(topics, getTopics(u.TopContributedRepo.Nodes[0].Topics)...)
-
 	candidate := types.Candidate{
-		CandidateId:             uuid.NewString(),
-		CandidateMeta:           u.CandidateMeta,
-		TotalContributions:      u.Contributions.ContributionCalendar.TotalContributions,
-		TotalFollowers:          u.Followers.TotalCount,
-		TopRepo:                 u.TopRepo.Nodes[0].Name,
-		TopRepoStars:            u.TopRepo.Nodes[0].Stargazers.TotalCount,
-		TopContributedRepo:      u.TopContributedRepo.Nodes[0].Name,
-		TopContributedRepoStars: u.TopContributedRepo.Nodes[0].Stargazers.TotalCount,
-		Languages:               languages,
-		Topics:                  topics,
-		JobId:                   jobId,
+		CandidateId:        uuid.NewString(),
+		CandidateMeta:      u.CandidateMeta,
+		TotalContributions: u.Contributions.ContributionCalendar.TotalContributions,
+		TotalFollowers:     u.Followers.TotalCount,
+		JobId:              jobId,
+	}
+
+	if len(u.TopRepo.Nodes) > 0 {
+		candidate.TopRepo = u.TopRepo.Nodes[0].Name
+		candidate.TopRepoStars = u.TopRepo.Nodes[0].Stargazers.TotalCount
+		candidate.Languages += len(u.TopRepo.Nodes[0].Languages.Nodes)
+		candidate.Topics += len(u.TopRepo.Nodes[0].Topics.Nodes)
+	}
+
+	if len(u.TopContributedRepo.Nodes) > 0 {
+		candidate.TopContributedRepo = u.TopContributedRepo.Nodes[0].Name
+		candidate.TopContributedRepoStars = u.TopContributedRepo.Nodes[0].Stargazers.TotalCount
+		candidate.Languages += len(u.TopContributedRepo.Nodes[0].Languages.Nodes)
+		candidate.Topics += len(u.TopContributedRepo.Nodes[0].Topics.Nodes)
 	}
 
 	// Store in DB
 	if err := s.store.SaveCandidate(&candidate); err != nil {
 		return err
 	}
-
 	return nil
-}
-
-// fetch top languages used in the repositories
-func getLanguages(v types.LanguageConnection) []string {
-	var languages []string
-	for _, l := range v.Nodes {
-		languages = append(languages, l.Name)
-	}
-	return languages
-}
-
-// fetch the topics used in the repositories
-func getTopics(v types.RepositoryTopics) []string {
-	var topics []string
-	for _, t := range v.Nodes {
-		topics = append(topics, t.Topic.Name)
-	}
-	return topics
 }
