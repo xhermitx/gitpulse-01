@@ -182,7 +182,13 @@ func (h *Handler) ResultHandler(w http.ResponseWriter, r *http.Request) {
 		utils.ErrResponseWriter(w, http.StatusInternalServerError, err)
 	}
 
-	topCanidates := results.TopNCandidates(candidateList, payload.Count)
+	var topCanidates []results.Candidate
+
+	if len(candidateList) > 0 {
+		// Customer package for evaluating and ranking candidates
+		// based on their stats
+		topCanidates = results.TopNCandidates(candidateList, payload.Count)
+	}
 
 	utils.ResponseWriter(w, http.StatusOK, message{
 		"message": "Result Candidates",
