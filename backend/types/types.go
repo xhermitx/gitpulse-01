@@ -17,22 +17,26 @@ type UserStore interface {
 }
 
 type User struct {
-	UserId       string    `json:"user_id,omitempty" gorm:"primary_key"`
-	FirstName    string    `json:"first_name,omitempty" gorm:"not null"`
-	LastName     string    `json:"last_name,omitempty" gorm:"not null"`
-	Username     string    `json:"username,omitempty" gorm:"unique, not null"`
-	Email        string    `json:"email,omitempty" gorm:"unique, not null"`
-	Password     string    `json:"password,omitempty" gorm:"not null"`
-	Organization string    `json:"organization,omitempty" gorm:"not null"`
-	CreatedAt    time.Time `json:"created_at,omitempty" gorm:"type:datetime"`
+	UserId       string    `json:"user_id" gorm:"primary_key" example:"<user_id>"`
+	FirstName    string    `json:"first_name" gorm:"not null" example:"John"`
+	LastName     string    `json:"last_name" gorm:"not null" example:"Doe"`
+	Username     string    `json:"username" gorm:"unique, not null" example:"jondo"`
+	Email        string    `json:"email" gorm:"unique, not null" example:"doe.john@gmail.com"`
+	Password     string    `json:"password" gorm:"not null" example:"johnkibilli@123"`
+	Organization string    `json:"organization" gorm:"not null" example:"Illuminati"`
+	CreatedAt    time.Time `json:"created_at" gorm:"type:datetime"`
 }
 
 type UserContext string
 
 type Credentials struct {
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Email    string `json:"email" example:"doe.john@gmail.com"`
+	Username string `json:"username" example:"jondo"`
+	Password string `json:"password" example:"johnkibilli@123"`
+}
+
+type DeleteUserPayload struct {
+	UserId string `json:"user_id" example:"<user_id>"`
 }
 
 type JobStore interface {
@@ -40,7 +44,7 @@ type JobStore interface {
 	UpdateJob(Job) error
 	DeleteJob(string) error
 	ListJobs(string) ([]Job, error)
-	FindJobById(string) (*Job, error)
+	FindJobById(string, string) (*Job, error)
 }
 
 type Job struct {
@@ -64,10 +68,6 @@ type ParserPayload struct {
 
 type DeleteJobPayload struct {
 	JobId string `json:"job_id"`
-}
-
-type DeleteUserPayload struct {
-	UserId string `json:"user_id"`
 }
 
 type CandidateStore interface {

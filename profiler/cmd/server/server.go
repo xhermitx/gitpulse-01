@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/xhermitx/gitpulse-01/profiler/types"
-	"github.com/xhermitx/gitpulse-01/profiler/utils"
 )
 
 const (
@@ -55,13 +54,18 @@ func (s Server) handleQueueData(msgs <-chan amqp.Delivery) {
 	for d := range msgs {
 		var jobQueue types.JobQueue
 		if err := json.Unmarshal(d.Body, &jobQueue); err != nil {
-			utils.LogError(err, "failed to parse candidate data")
+			log.Println("failed to parse candidate data", err)
 			if err := s.cache.Append(context.Background(), UNPARSED_CACHE_PREFIX+jobQueue.JobId, jobQueue.Filename+" "); err != nil {
 				fmt.Printf("\nfailed to cache %s: %v", jobQueue.Filename, err)
 			}
 		}
 
 		fmt.Println("Queue Msg: ", jobQueue)
+
+		// Initialize the cache count
+		if err := s.cache.Set(context.Background(), PARSED_CACHE_PREFIX+jobQueue.JobId, 0, 0); err != nil {
+			log.Println(err)
+		}
 
 		// Fetch user details from git
 		for _, id := range jobQueue.GithubIDs {
@@ -91,6 +95,8 @@ func (s Server) handleQueueData(msgs <-chan amqp.Delivery) {
 				log.Println("failed to convert the cache value to int", err)
 				continue
 			}
+			fmt.Println("Currect Count: ", n)
+
 			if err := s.cache.Set(context.Background(), PARSED_CACHE_PREFIX+id, n+1, 0); err != nil {
 				log.Println("failed to update PARSED CACHE")
 			}

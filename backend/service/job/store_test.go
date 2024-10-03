@@ -11,6 +11,7 @@ import (
 )
 
 const jobId = "7da6a7cc-08cc-4aeb-8895-63185ccfcf5e"
+const userId = ""
 
 func TestDeleteJob(t *testing.T) {
 
@@ -41,7 +42,7 @@ func TestDeleteJob(t *testing.T) {
 	// })
 
 	t.Run("Expected to return a job", func(t *testing.T) {
-		job, err := jobStore.FindJobById(jobId)
+		job, err := jobStore.FindJobById(jobId, userId)
 		if err != nil || job == nil {
 			t.Error("Failed to fetch the job")
 		}

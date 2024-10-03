@@ -66,13 +66,15 @@ func (h *Handler) CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateJobHandler(w http.ResponseWriter, r *http.Request) {
+	userId := r.Context().Value(types.UserContext("user_id")).(string)
+
 	var job types.Job
 	if err := utils.ParseRequestBody(r, &job); err != nil {
 		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
 		return
 	}
 
-	if _, ok := h.checkJobExists(w, job.JobId); !ok {
+	if _, ok := h.checkJobExists(w, job.JobId, userId); !ok {
 		return
 	}
 
@@ -90,12 +92,14 @@ func (h *Handler) UpdateJobHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteJobHandler(w http.ResponseWriter, r *http.Request) {
+	userId := r.Context().Value(types.UserContext("user_id")).(string)
+
 	var job types.DeleteJobPayload
 	if err := utils.ParseRequestBody(r, &job); err != nil {
 		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
 		return
 	}
-	if _, ok := h.checkJobExists(w, job.JobId); !ok {
+	if _, ok := h.checkJobExists(w, job.JobId, userId); !ok {
 		return
 	}
 
@@ -129,13 +133,15 @@ func (h *Handler) ListJobHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) TriggerJobHandler(w http.ResponseWriter, r *http.Request) {
+	userId := r.Context().Value(types.UserContext("user_id")).(string)
+
 	var payload types.TriggerJobPayload
 	if err := utils.ParseRequestBody(r, &payload); err != nil {
 		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
 		return
 	}
 
-	job, ok := h.checkJobExists(w, payload.JobId)
+	job, ok := h.checkJobExists(w, payload.JobId, userId)
 	if !ok {
 		return
 	}
@@ -168,12 +174,14 @@ func (h *Handler) TriggerJobHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ResultHandler(w http.ResponseWriter, r *http.Request) {
+	userId := r.Context().Value(types.UserContext("user_id")).(string)
+
 	var payload types.JobResultPayload
 	if err := utils.ParseRequestBody(r, &payload); err != nil {
 		utils.ErrResponseWriter(w, http.StatusBadRequest, err)
 		return
 	}
-	if _, ok := h.checkJobExists(w, payload.JobId); !ok {
+	if _, ok := h.checkJobExists(w, payload.JobId, userId); !ok {
 		return
 	}
 
@@ -196,8 +204,8 @@ func (h *Handler) ResultHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) checkJobExists(w http.ResponseWriter, jobId string) (*types.Job, bool) {
-	res, err := h.jobStore.FindJobById(jobId)
+func (h *Handler) checkJobExists(w http.ResponseWriter, jobId string, userId string) (*types.Job, bool) {
+	res, err := h.jobStore.FindJobById(jobId, userId)
 	if res == nil {
 		utils.ErrResponseWriter(w, http.StatusConflict, errors.New("job does not exist"))
 		return nil, false

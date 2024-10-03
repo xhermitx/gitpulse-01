@@ -1,0 +1,137 @@
+definitions:
+  types.Credentials:
+    properties:
+      email:
+        example: doe.john@gmail.com
+        type: string
+      password:
+        example: johnkibilli@123
+        type: string
+      username:
+        example: jondo
+        type: string
+    type: object
+  types.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        example: doe.john@gmail.com
+        type: string
+      first_name:
+        example: John
+        type: string
+      last_name:
+        example: Doe
+        type: string
+      organization:
+        example: Illuminati
+        type: string
+      password:
+        example: johnkibilli@123
+        type: string
+      user_id:
+        example: <user_id>
+        type: string
+      username:
+        example: jondo
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/:
+    get:
+      description: Greeting
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: string
+      summary: Example API
+      tags:
+      - example
+  /api/v1/auth/delete:
+    post:
+      consumes:
+      - application/json
+      description: Delete account
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: json
+      summary: Delete Account
+      tags:
+      - auth
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login using Email/Username
+      parameters:
+      - description: Login
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/types.Credentials'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: json
+      summary: Login
+      tags:
+      - auth
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user
+      parameters:
+      - description: Create Account (userId not required)
+        in: body
+        name: user_details
+        required: true
+        schema:
+          $ref: '#/definitions/types.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Success
+          schema:
+            type: json
+      summary: Register
+      tags:
+      - auth
+  /api/v1/auth/update:
+    patch:
+      consumes:
+      - application/json
+      description: Update Account Details
+      parameters:
+      - description: Update Account
+        in: body
+        name: user_details
+        required: true
+        schema:
+          $ref: '#/definitions/types.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: json
+      summary: Update Account
+      tags:
+      - auth
+swagger: "2.0"

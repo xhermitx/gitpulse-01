@@ -50,7 +50,7 @@ func (s *mockJobStore) DeleteJob(_ string) error {
 func (s *mockJobStore) ListJobs(_ string) ([]types.Job, error) {
 	panic("uimplemented")
 }
-func (s *mockJobStore) FindJobById(_ string) (*types.Job, error) {
+func (s *mockJobStore) FindJobById(_, _ string) (*types.Job, error) {
 	panic("unimplemented")
 }
 

@@ -2,3 +2,4 @@
 *.json
 bin
 .VSCodeCounter
+go.sum
