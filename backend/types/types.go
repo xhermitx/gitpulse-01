@@ -57,7 +57,7 @@ type Job struct {
 }
 
 type TriggerJobPayload struct {
-	JobId     string `json:"job_id"`
+	JobId     string `json:"job_id" example:"<job_id>"`
 	DriveLink string `json:"drive_link"`
 }
 
@@ -67,7 +67,7 @@ type ParserPayload struct {
 }
 
 type DeleteJobPayload struct {
-	JobId string `json:"job_id"`
+	JobId string `json:"job_id" example:"<job_id>"`
 }
 
 type CandidateStore interface {

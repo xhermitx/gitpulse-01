@@ -3,4 +3,8 @@ GitPulse Tracker is an innovative recruiting tool designed to streamline the tal
 
 # architecture
 
-![gitpulse-architecture](./static/image.png "GitPulse Architecture")
+![gitpulse-architecture](./static/architecture.png "GitPulse Architecture")
+
+# endpoints
+
+![gitpulse-api](./static/endpoints.png "API Specifications")

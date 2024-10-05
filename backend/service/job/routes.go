@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/xhermitx/gitpulse-01/backend/config"
+	_ "github.com/xhermitx/gitpulse-01/backend/docs"
 	"github.com/xhermitx/gitpulse-01/backend/service/auth"
 	"github.com/xhermitx/gitpulse-01/backend/types"
 	"github.com/xhermitx/gitpulse-01/backend/utils"
@@ -41,6 +42,16 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/result/{count}", auth.AuthMiddleware(h.ResultHandler, h.userStore)).Methods(http.MethodGet)
 }
 
+// Create Job
+//
+//	@Summary		Create Job
+//	@Description	Create Job with details (ID not required)
+//	@Tags			job
+//	@Accept			json
+//	@Produce		json
+//	@Param			job_details	body	types.Job	true	"Create"	example(types.Job)
+//	@Success		200			{json}	string		"Success"
+//	@Router			/api/v1/job/create [post]
 func (h *Handler) CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 	var job types.Job
 	if err := utils.ParseRequestBody(r, &job); err != nil {
@@ -65,6 +76,16 @@ func (h *Handler) CreateJobHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Update Job
+//
+//	@Summary		Update Job
+//	@Description	Update Job with details
+//	@Tags			job
+//	@Accept			json
+//	@Produce		json
+//	@Param			job_details	body	types.Job	true	"Update"	example(types.Job)
+//	@Success		200			{json}	string		"Success"
+//	@Router			/api/v1/job/update [post]
 func (h *Handler) UpdateJobHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(types.UserContext("user_id")).(string)
 
@@ -91,6 +112,16 @@ func (h *Handler) UpdateJobHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Delete Job
+//
+//	@Summary		Update Job
+//	@Description	Update Job with details
+//	@Tags			job
+//	@Accept			json
+//	@Produce		json
+//	@Param			job_id	body	types.DeleteJobPayload	true	"Delete"	example(types.DeleteJobPayload)
+//	@Success		200		{json}	string					"Success"
+//	@Router			/api/v1/job/update [post]
 func (h *Handler) DeleteJobHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(types.UserContext("user_id")).(string)
 
@@ -116,6 +147,15 @@ func (h *Handler) DeleteJobHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// List Jobs
+//
+//	@Summary		List Jobs
+//	@Description	List Jobs with details
+//	@Tags			job
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{json}	string	"Success"
+//	@Router			/api/v1/job/update [post]
 func (h *Handler) ListJobHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value(types.UserContext("user_id")).(string)
 
@@ -132,6 +172,16 @@ func (h *Handler) ListJobHandler(w http.ResponseWriter, r *http.Request) {
 	utils.ResponseWriter(w, http.StatusFound, payload)
 }
 
+// Trigger Analysis Job
+//
+//	@Summary		Trigger Analysis
+//	@Description	Start Evaluating Candidates
+//	@Tags			job
+//	@Accept			json
+//	@Produce		json
+//	@Param			job_id	body	types.TriggerJobPayload	true	"Trigger"	example(types.TriggerJobPayload)
+//	@Success		200		{json}	string					"Success"
+//	@Router			/api/v1/job/trigger [post]
 func (h *Handler) TriggerJobHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(types.UserContext("user_id")).(string)
 
@@ -173,6 +223,16 @@ func (h *Handler) TriggerJobHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Get Results
+//
+//	@Summary		Get Results
+//	@Description	List Top Canidates post analysis
+//	@Tags			job
+//	@Accept			json
+//	@Produce		json
+//	@Param			result_request	body	types.JobResultPayload	true	"Result"	example(types.JobResultPayload)
+//	@Success		200				{json}	string					"Success"
+//	@Router			/api/v1/job/result [post]
 func (h *Handler) ResultHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(types.UserContext("user_id")).(string)
 
@@ -193,7 +253,7 @@ func (h *Handler) ResultHandler(w http.ResponseWriter, r *http.Request) {
 	var topCanidates []results.Candidate
 
 	if len(candidateList) > 0 {
-		// Customer package for evaluating and ranking candidates
+		// Custom package for evaluating and ranking candidates
 		// based on their stats
 		topCanidates = results.TopNCandidates(candidateList, payload.Count)
 	}

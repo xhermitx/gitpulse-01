@@ -11,6 +11,41 @@ definitions:
         example: jondo
         type: string
     type: object
+  types.DeleteJobPayload:
+    properties:
+      job_id:
+        type: string
+    type: object
+  types.Job:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      drive_link:
+        type: string
+      job_id:
+        type: string
+      job_name:
+        type: string
+      user_id:
+        type: string
+    type: object
+  types.JobResultPayload:
+    properties:
+      count:
+        type: integer
+      job_id:
+        type: string
+    type: object
+  types.TriggerJobPayload:
+    properties:
+      drive_link:
+        type: string
+      job_id:
+        example: <job_id>
+        type: string
+    type: object
   types.User:
     properties:
       created_at:
@@ -134,4 +169,85 @@ paths:
       summary: Update Account
       tags:
       - auth
+  /api/v1/job/create:
+    post:
+      consumes:
+      - application/json
+      description: Create Job with details (ID not required)
+      parameters:
+      - description: Create
+        in: body
+        name: job_details
+        required: true
+        schema:
+          $ref: '#/definitions/types.Job'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: json
+      summary: Create Job
+      tags:
+      - job
+  /api/v1/job/result:
+    post:
+      consumes:
+      - application/json
+      description: List Top Canidates post analysis
+      parameters:
+      - description: Result
+        in: body
+        name: result_request
+        required: true
+        schema:
+          $ref: '#/definitions/types.JobResultPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: json
+      summary: Get Results
+      tags:
+      - job
+  /api/v1/job/trigger:
+    post:
+      consumes:
+      - application/json
+      description: Start Evaluating Candidates
+      parameters:
+      - description: Trigger
+        in: body
+        name: job_id
+        required: true
+        schema:
+          $ref: '#/definitions/types.TriggerJobPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: json
+      summary: Trigger Analysis
+      tags:
+      - job
+  /api/v1/job/update:
+    post:
+      consumes:
+      - application/json
+      description: List Jobs with details
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: json
+      summary: List Jobs
+      tags:
+      - job
 swagger: "2.0"

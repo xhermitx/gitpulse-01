@@ -47,7 +47,7 @@ func (s *Store) ListJobs(userId string) ([]types.Job, error) {
 
 func (s *Store) FindJobById(jobId string, userId string) (*types.Job, error) {
 	var job types.Job
-	if res := s.db.First(&job, "job_id = ?", jobId); res.Error != nil {
+	if res := s.db.First(&job, "job_id = ? AND user_id = ?", jobId, userId); res.Error != nil {
 		return nil, res.Error
 	}
 	return &job, nil

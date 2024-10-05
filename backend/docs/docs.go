@@ -159,6 +159,131 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/job/create": {
+            "post": {
+                "description": "Create Job with details (ID not required)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "job"
+                ],
+                "summary": "Create Job",
+                "parameters": [
+                    {
+                        "description": "Create",
+                        "name": "job_details",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.Job"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "json"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/job/result": {
+            "post": {
+                "description": "List Top Canidates post analysis",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "job"
+                ],
+                "summary": "Get Results",
+                "parameters": [
+                    {
+                        "description": "Result",
+                        "name": "result_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.JobResultPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "json"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/job/trigger": {
+            "post": {
+                "description": "Start Evaluating Candidates",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "job"
+                ],
+                "summary": "Trigger Analysis",
+                "parameters": [
+                    {
+                        "description": "Trigger",
+                        "name": "job_id",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.TriggerJobPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "json"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/job/update": {
+            "post": {
+                "description": "List Jobs with details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "job"
+                ],
+                "summary": "List Jobs",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "json"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -176,6 +301,60 @@ const docTemplate = `{
                 "username": {
                     "type": "string",
                     "example": "jondo"
+                }
+            }
+        },
+        "types.DeleteJobPayload": {
+            "type": "object",
+            "properties": {
+                "job_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.Job": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "drive_link": {
+                    "type": "string"
+                },
+                "job_id": {
+                    "type": "string"
+                },
+                "job_name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.JobResultPayload": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "job_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.TriggerJobPayload": {
+            "type": "object",
+            "properties": {
+                "drive_link": {
+                    "type": "string"
+                },
+                "job_id": {
+                    "type": "string",
+                    "example": "\u003cjob_id\u003e"
                 }
             }
         },
