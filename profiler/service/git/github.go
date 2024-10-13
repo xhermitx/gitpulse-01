@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/xhermitx/gitpulse-01/profiler/configs"
+	configs "github.com/xhermitx/gitpulse-01/profiler/config"
 	"github.com/xhermitx/gitpulse-01/profiler/types"
 )
 

@@ -6,7 +6,7 @@ import (
 	mysqlCfg "github.com/go-sql-driver/mysql"
 	"github.com/redis/go-redis/v9"
 	"github.com/xhermitx/gitpulse-01/profiler/cmd/server"
-	"github.com/xhermitx/gitpulse-01/profiler/configs"
+	configs "github.com/xhermitx/gitpulse-01/profiler/config"
 	"github.com/xhermitx/gitpulse-01/profiler/service/cache"
 	"github.com/xhermitx/gitpulse-01/profiler/service/git"
 	"github.com/xhermitx/gitpulse-01/profiler/service/queue"
